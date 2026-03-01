@@ -20,141 +20,187 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
-      * { font-family: 'Outfit', sans-serif !important; }
-
-      body {
-        background: #0F0F0F !important;
-        color: #F0EDE8 !important;
+      *, *::before, *::after {
+        font-family: 'Outfit', sans-serif !important;
+        box-sizing: border-box;
       }
 
-      /* Superficies */
-      .bg-white { background: #1A1A1A !important; }
-      .bg-gray-50 { background: #0F0F0F !important; }
-      .bg-gray-100 { background: #222222 !important; }
-      .bg-gray-200 { background: #2A2A2A !important; }
+      html, body, #root, #root > div {
+        background-color: #0F0F0F !important;
+        color: #F0EDE8 !important;
+        min-height: 100vh;
+      }
 
-      /* Textos */
-      .text-gray-800, .text-gray-900 { color: #F0EDE8 !important; }
-      .text-gray-700 { color: #C8C5BF !important; }
-      .text-gray-600 { color: #999994 !important; }
-      .text-gray-500, .text-gray-400 { color: #666660 !important; }
-
-      /* Bordes */
-      .border-gray-100, .border-gray-200, .border-gray-300 { border-color: #2A2A2A !important; }
-
-      /* Headers */
-      .bg-blue-600 { background: #1A1A1A !important; border-bottom: 1px solid #2A2A2A !important; }
-      .bg-gradient-to-r { background: #1A1A1A !important; border-bottom: 1px solid #2A2A2A !important; }
-      .text-blue-100 { color: #666660 !important; }
-      .from-blue-600, .to-indigo-600 { --tw-gradient-from: #1A1A1A !important; --tw-gradient-to: #1A1A1A !important; }
-
-      /* Botón azul principal */
-      .bg-blue-600 { background: #F0EDE8 !important; }
-      .text-white { color: #0F0F0F !important; }
-      .hover\:bg-blue-700:hover { background: #D8D5CF !important; }
-
-      /* Botón verde resolver */
-      .bg-green-600 { background: #F0EDE8 !important; }
-      .hover\:bg-green-700:hover { background: #D8D5CF !important; }
-
-      /* Botón rojo eliminar */
-      .bg-red-600 { background: #FF4D4D !important; color: #0F0F0F !important; }
-      .hover\:bg-red-700:hover { background: #E03E3E !important; }
-
-      /* Estados */
-      .bg-red-100 { background: rgba(255,77,77,0.12) !important; }
-      .text-red-700 { color: #FF4D4D !important; }
-      .bg-green-100 { background: rgba(77,255,145,0.1) !important; }
-      .text-green-700 { color: #4DFF91 !important; }
-
-      /* Inputs */
-      input, textarea, select {
+      /* ── FONDOS ── */
+      [class*="bg-white"],
+      [class*="bg-gray-50"],
+      [class*="bg-gray-100"] {
+        background-color: #1A1A1A !important;
+      }
+      [class*="bg-gray-200"],
+      [class*="bg-gray-300"] {
+        background-color: #2A2A2A !important;
+      }
+      [class*="bg-blue-600"],
+      [class*="bg-blue-700"],
+      [class*="bg-indigo-600"] {
+        background-color: #1A1A1A !important;
+        border-bottom: 1px solid #2A2A2A !important;
+      }
+      /* Degradado header dashboard */
+      [class*="bg-gradient"] {
         background: #1A1A1A !important;
-        color: #F0EDE8 !important;
-        border-color: #2A2A2A !important;
+        border-bottom: 1px solid #2A2A2A !important;
       }
-      input::placeholder, textarea::placeholder { color: #666660 !important; }
-      input:focus, textarea:focus { border-color: #666660 !important; }
 
-      /* Cards con sombra → sin sombra, con borde */
-      .shadow, .shadow-md, .shadow-lg {
+      /* ── TEXTOS ── */
+      [class*="text-white"] { color: #F0EDE8 !important; }
+      [class*="text-gray-900"],
+      [class*="text-gray-800"] { color: #F0EDE8 !important; }
+      [class*="text-gray-700"],
+      [class*="text-gray-600"] { color: #AAAAAA !important; }
+      [class*="text-gray-500"],
+      [class*="text-gray-400"] { color: #666660 !important; }
+      [class*="text-blue-100"],
+      [class*="text-blue-200"] { color: #888882 !important; }
+      [class*="text-blue-600"],
+      [class*="text-blue-700"],
+      [class*="text-blue-800"] { color: #F0EDE8 !important; }
+      [class*="text-blue-900"] { color: #F0EDE8 !important; }
+
+      /* ── ESTADOS ── */
+      [class*="bg-red-100"] { background-color: rgba(255,77,77,0.12) !important; }
+      [class*="text-red-700"] { color: #FF6B6B !important; }
+      [class*="bg-green-100"] { background-color: rgba(77,255,145,0.1) !important; }
+      [class*="text-green-700"],
+      [class*="text-green-600"] { color: #4DFF91 !important; }
+      [class*="text-red-600"] { color: #FF6B6B !important; }
+      [class*="text-purple-600"] { color: #C8C5BF !important; }
+
+      /* ── BOTONES ── */
+      [class*="bg-green-600"],
+      [class*="bg-green-700"] {
+        background-color: #F0EDE8 !important;
+        color: #0F0F0F !important;
+      }
+      [class*="bg-red-600"],
+      [class*="bg-red-700"] {
+        background-color: #FF4D4D !important;
+        color: #0F0F0F !important;
+      }
+      /* Botón "Ingresar" y principales */
+      button[class*="bg-blue-600"],
+      button[class*="bg-green-600"] {
+        background-color: #F0EDE8 !important;
+        color: #0F0F0F !important;
+      }
+
+      /* ── INPUTS / SELECTS ── */
+      input, textarea, select {
+        background-color: #222222 !important;
+        color: #F0EDE8 !important;
+        border-color: #3A3A3A !important;
+      }
+      input::placeholder, textarea::placeholder {
+        color: #555550 !important;
+      }
+      input:focus, textarea:focus, select:focus {
+        border-color: #666660 !important;
+        outline: none !important;
+        box-shadow: none !important;
+      }
+      /* Select option */
+      option {
+        background-color: #1A1A1A !important;
+        color: #F0EDE8 !important;
+      }
+
+      /* ── BORDES ── */
+      [class*="border-gray-100"],
+      [class*="border-gray-200"],
+      [class*="border-gray-300"] { border-color: #2A2A2A !important; }
+      [class*="border-blue-200"] { border-color: #2A2A2A !important; }
+      [class*="border-dashed"] { border-color: #3A3A3A !important; }
+
+      /* ── SOMBRAS → BORDES ── */
+      [class*="shadow"] {
         box-shadow: none !important;
         border: 1px solid #2A2A2A !important;
       }
 
-      /* Rounded */
-      .rounded-lg, .rounded-xl { border-radius: 12px !important; }
-      .rounded-full { border-radius: 9999px !important; }
-
-      /* Botón flotante + */
+      /* ── FAB ── */
       .fixed.bottom-6.right-6 {
-        border-radius: 14px !important;
-        background: #F0EDE8 !important;
+        background-color: #F0EDE8 !important;
         color: #0F0F0F !important;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
-        width: 52px !important;
-        height: 52px !important;
+        border-radius: 14px !important;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.6) !important;
+        border: none !important;
       }
 
-      /* Botón volver */
-      .text-blue-100.hover\:text-white { color: #666660 !important; }
+      /* ── ANÁLISIS ── */
+      [class*="bg-red-50"] { background-color: rgba(255,77,77,0.08) !important; }
+      [class*="border-red-500"] { border-color: #FF4D4D !important; }
+      [class*="text-red-800"] { color: #FF6B6B !important; }
+      [class*="bg-yellow-50"] { background-color: rgba(255,184,77,0.08) !important; }
+      [class*="border-yellow-500"] { border-color: #FFB84D !important; }
+      [class*="text-yellow-800"] { color: #FFB84D !important; }
+      [class*="bg-green-50"] { background-color: rgba(77,255,145,0.08) !important; }
+      [class*="border-green-500"] { border-color: #4DFF91 !important; }
+      [class*="text-green-800"] { color: #4DFF91 !important; }
 
-      /* Badges de estado (pills) */
-      .bg-red-100.text-red-700 { background: rgba(255,77,77,0.12) !important; color: #FF4D4D !important; }
-      .bg-green-100.text-green-700 { background: rgba(77,255,145,0.1) !important; color: #4DFF91 !important; }
+      /* ── ANÁLISIS BOTÓN ── */
+      [class*="from-purple-600"],
+      [class*="to-indigo-600"],
+      button[class*="from-purple"] {
+        background: #222222 !important;
+        color: #F0EDE8 !important;
+      }
 
-      /* Análisis inteligente */
-      .bg-red-50 { background: rgba(255,77,77,0.08) !important; }
-      .border-red-500 { border-color: #FF4D4D !important; }
-      .text-red-800 { color: #FF4D4D !important; }
-      .bg-yellow-50 { background: rgba(255,184,77,0.08) !important; }
-      .border-yellow-500 { border-color: #FFB84D !important; }
-      .text-yellow-800 { color: #FFB84D !important; }
-      .bg-green-50 { background: rgba(77,255,145,0.08) !important; }
-      .border-green-500 { border-color: #4DFF91 !important; }
-      .text-green-800 { color: #4DFF91 !important; }
+      /* ── DISABLED ── */
+      [disabled] {
+        background-color: #2A2A2A !important;
+        color: #555550 !important;
+        cursor: not-allowed;
+      }
 
-      /* Botón análisis */
-      .from-purple-600, .to-indigo-600 { background: #222222 !important; }
-      .hover\:from-purple-700:hover, .hover\:to-indigo-700:hover { background: #2A2A2A !important; }
-      .from-purple-600 { color: #F0EDE8 !important; }
+      /* ── LOGIN CARD ── */
+      /* El fondo del login usa min-h-screen bg-gray-100 */
+      .min-h-screen {
+        background-color: #0F0F0F !important;
+      }
 
-      /* Nuevo comentario fondo */
-      .bg-blue-50 { background: rgba(240,237,232,0.05) !important; }
-      .border-blue-200 { border-color: #2A2A2A !important; }
-      .text-blue-900, .text-blue-700 { color: #C8C5BF !important; }
+      /* ── CHART DARK ── */
+      canvas { background: transparent !important; }
 
-      /* Disabled */
-      .disabled\:bg-gray-300:disabled { background: #2A2A2A !important; color: #666660 !important; }
+      /* ── HOVER estados en tarjetas ── */
+      [class*="hover:shadow-md"]:hover {
+        box-shadow: none !important;
+        border-color: #444440 !important;
+      }
 
-      /* Login page */
-      .bg-blue-600.text-white { background: #1A1A1A !important; }
-      
-      /* Barra lateral de estado en tarjetas */
-      .border-l-4 { border-left-width: 3px !important; }
+      /* ── TABS / FILTROS activos ── */
+      [class*="bg-blue-100"] {
+        background-color: #2A2A2A !important;
+        color: #F0EDE8 !important;
+      }
+      [class*="bg-blue-50"] {
+        background-color: rgba(255,255,255,0.04) !important;
+      }
 
-      /* Filter/tab buttons activos */
-      .bg-blue-100 { background: #222222 !important; }
-      .text-blue-800 { color: #F0EDE8 !important; }
+      /* ── NUEVO: pill estado en lista ── */
+      .rounded-full[class*="bg-red"] {
+        background-color: rgba(255,77,77,0.15) !important;
+        color: #FF6B6B !important;
+      }
+      .rounded-full[class*="bg-green"] {
+        background-color: rgba(77,255,145,0.12) !important;
+        color: #4DFF91 !important;
+      }
 
-      /* Texto azul genérico */
-      .text-blue-600 { color: #F0EDE8 !important; }
-      .text-blue-700 { color: #C8C5BF !important; }
-
-      /* Stats numbers color */
-      .text-purple-600 { color: #C8C5BF !important; }
-
-      /* Dashboard gradient */
-      .from-blue-600.to-indigo-600 { background: #1A1A1A !important; }
-
-      /* Hover estados en lista */
-      .hover\:shadow-md:hover { box-shadow: none !important; border-color: #444440 !important; }
-
-      /* Canvas chart background */
-      canvas { filter: invert(0) !important; }
-
-      /* Print header */
-      .print-only { color: #F0EDE8 !important; }
+      /* ── SCROLLBAR ── */
+      ::-webkit-scrollbar { width: 4px; }
+      ::-webkit-scrollbar-track { background: #0F0F0F; }
+      ::-webkit-scrollbar-thumb { background: #2A2A2A; border-radius: 2px; }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script>
