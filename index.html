@@ -7,6 +7,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1E3A5F">
     <title>FERNI - Sistema de Incidencias</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -17,6 +19,13 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('sw.js').catch(() => {});
+        });
+      }
+    </script>
 </head>
 <body>
     <div id="root"></div>
@@ -223,6 +232,14 @@
           const [reporteActual, setReporteActual] = useState(null);
           const [cargando, setCargando] = useState(false);
 
+          // Sincronizar reporteActual con el snapshot en tiempo real
+          useEffect(() => {
+            if (reporteActual) {
+              const actualizado = reportes.find(r => r.id === reporteActual.id);
+              if (actualizado) setReporteActual(actualizado);
+            }
+          }, [reportes]);
+
           // Limpieza automática (solo admins)
           useEffect(() => {
             if (esAdmin || esGerente) {
@@ -393,6 +410,16 @@
             const reportesFiltrados = reportes.filter(r => filtroEstado === 'todos' || r.estado === filtroEstado);
             const sucursalNombre = sucursalActiva === 'TODAS' ? 'Todas las Sucursales' : SUCURSALES.find(s => s.id === sucursalActiva)?.nombre || sucursalActiva;
 
+            const tiempoTranscurrido = (campo) => {
+              const fecha = getFecha(campo);
+              if (!fecha) return null;
+              const diff = Date.now() - fecha.getTime();
+              const horas = Math.floor(diff / (1000 * 60 * 60));
+              const dias = Math.floor(horas / 24);
+              if (dias >= 1) return { texto: `hace ${dias}d`, color: dias >= 3 ? 'text-red-600 font-bold' : dias >= 1 ? 'text-orange-500 font-semibold' : 'text-gray-400' };
+              return { texto: `hace ${horas}h`, color: horas >= 12 ? 'text-orange-500 font-semibold' : 'text-gray-400' };
+            };
+
             // Marcar como visto al interactuar
             const marcarVisto = () => {
               const ultimaVisitaKey = `ultimaVisita_${sucursalActiva}`;
@@ -472,6 +499,7 @@
                       const categoria = CATEGORIAS.find(c => c.id === reporte.categoria);
                       const sucursal = SUCURSALES.find(s => s.id === reporte.sucursal);
                       const esNuevo = reportesNuevos.includes(reporte.id);
+                      const tiempo = reporte.estado === 'abierto' ? tiempoTranscurrido(reporte.fecha_creacion) : null;
                       return (
                         <div 
                           key={reporte.id} 
@@ -496,7 +524,10 @@
                             </span>
                           </div>
                           <p className="text-gray-600 text-sm mb-2 line-clamp-2">{reporte.descripcion}</p>
-                          <div className="text-xs text-gray-400">{formatFecha(reporte.fecha_creacion)}</div>
+                          <div className="flex justify-between items-center">
+                            <div className="text-xs text-gray-400">{formatFecha(reporte.fecha_creacion)}</div>
+                            {tiempo && <div className={`text-xs ${tiempo.color}`}>⏱ {tiempo.texto}</div>}
+                          </div>
                         </div>
                       );
                     })
@@ -1213,163 +1244,123 @@
                     </div>
                   )}
 
-                  {/* Análisis Inteligente - Solo admin y gerentes */}
+                  {/* Análisis Inteligente con IA - Solo admin y gerentes */}
                   {(esAdmin || esGerente) && (() => {
-                    const generarAnalisis = () => {
-                      if (reportesFiltrados.length === 0) return null;
+                    const [mostrarAnalisis, setMostrarAnalisis] = useState(false);
+                    const [analisisTexto, setAnalisisTexto] = useState('');
+                    const [cargandoAnalisis, setCargandoAnalisis] = useState(false);
 
+                    const generarAnalisisIA = async () => {
+                      if (reportesFiltrados.length === 0) return;
+                      setCargandoAnalisis(true);
+                      setMostrarAnalisis(true);
+                      setAnalisisTexto('');
+
+                      // Preparar resumen de datos para enviar a la IA
                       const totalR = reportesFiltrados.length;
-                      const abiertosR = reportesFiltrados.filter(r => r.estado === 'abierto');
-                      const resueltosR = reportesFiltrados.filter(r => r.estado === 'resuelto');
-                      const tasaRes = totalR > 0 ? Math.round((resueltosR.length / totalR) * 100) : 0;
+                      const abiertos = reportesFiltrados.filter(r => r.estado === 'abierto').length;
+                      const resueltos = reportesFiltrados.filter(r => r.estado === 'resuelto').length;
+                      const tasaRes = totalR > 0 ? Math.round((resueltos / totalR) * 100) : 0;
 
-                      // Categoría más problemática (más abiertos)
-                      const catAbiertos = {};
-                      abiertosR.forEach(r => { catAbiertos[r.categoria] = (catAbiertos[r.categoria] || 0) + 1; });
-                      const catCriticaId = Object.entries(catAbiertos).sort((a, b) => b[1] - a[1])[0];
-                      const catCritica = catCriticaId ? CATEGORIAS.find(c => c.id === catCriticaId[0]) : null;
-
-                      // Categoría con peor tasa de resolución
-                      const catTasas = CATEGORIAS.map(cat => {
+                      const porCategoria = CATEGORIAS.map(cat => {
                         const rep = reportesFiltrados.filter(r => r.categoria === cat.id);
-                        const res = rep.filter(r => r.estado === 'resuelto').length;
-                        return { ...cat, total: rep.length, resueltos: res, tasa: rep.length > 0 ? Math.round((res / rep.length) * 100) : 100 };
-                      }).filter(c => c.total >= 2).sort((a, b) => a.tasa - b.tasa);
-                      const peorCategoria = catTasas.length > 0 ? catTasas[0] : null;
+                        return { nombre: cat.nombre, total: rep.length, abiertos: rep.filter(r => r.estado === 'abierto').length };
+                      }).filter(c => c.total > 0);
 
-                      // Tiempo promedio de resolución
-                      const tiempos = resueltosR.map(r => {
+                      const tiempos = reportesFiltrados.filter(r => r.estado === 'resuelto').map(r => {
                         const fc = getFecha(r.fecha_creacion);
                         const fr = getFecha(r.fecha_resolucion);
-                        if (fc && fr) return (fr - fc) / (1000 * 60 * 60);
+                        if (fc && fr) return Math.round((fr - fc) / (1000 * 60 * 60));
                         return null;
                       }).filter(t => t !== null && t >= 0);
                       const tiempoPromedio = tiempos.length > 0 ? Math.round(tiempos.reduce((a, b) => a + b, 0) / tiempos.length) : null;
 
-                      // Empleados destacados
-                      const resolvedoresCount = {};
-                      resueltosR.forEach(r => {
-                        const key = r.usuario_resuelve_email || r.usuario_resuelve;
-                        const name = r.usuario_resuelve;
-                        if (key && name) {
-                          if (!resolvedoresCount[key]) resolvedoresCount[key] = { nombre: name, count: 0 };
-                          resolvedoresCount[key].count++;
-                        }
-                      });
-                      const topResolvedor = Object.values(resolvedoresCount).sort((a, b) => b.count - a.count)[0];
-
-                      // Tendencia: comparar primera mitad vs segunda mitad
-                      const mitad = Math.floor(reportesFiltrados.length / 2);
-                      const primeraM = reportesFiltrados.slice(mitad); // más viejos (por sort desc)
-                      const segundaM = reportesFiltrados.slice(0, mitad); // más recientes
-                      const tasaPrimera = primeraM.length > 0 ? primeraM.filter(r => r.estado === 'resuelto').length / primeraM.length : 0;
-                      const tasaSegunda = segundaM.length > 0 ? segundaM.filter(r => r.estado === 'resuelto').length / segundaM.length : 0;
-                      const tendencia = tasaSegunda > tasaPrimera + 0.05 ? 'mejorando' : tasaSegunda < tasaPrimera - 0.05 ? 'empeorando' : 'estable';
-
-                      // Sucursal más crítica (solo para admin viendo todas)
-                      let sucCritica = null;
-                      if (esAdmin && sucursalActiva === 'TODAS') {
-                        const sucStats = SUCURSALES.map(suc => {
+                      let porSucursal = '';
+                      if (sucursalActiva === 'TODAS') {
+                        porSucursal = SUCURSALES.map(suc => {
                           const rep = reportesFiltrados.filter(r => r.sucursal === suc.id);
                           const ab = rep.filter(r => r.estado === 'abierto').length;
-                          return { ...suc, abiertos: ab, total: rep.length };
-                        }).filter(s => s.total > 0).sort((a, b) => b.abiertos - a.abiertos);
-                        sucCritica = sucStats.length > 0 && sucStats[0].abiertos > 0 ? sucStats[0] : null;
+                          return rep.length > 0 ? `${suc.nombre}: ${rep.length} reportes, ${ab} abiertos` : null;
+                        }).filter(Boolean).join(' | ');
                       }
 
-                      // Generar recomendaciones
-                      const recomendaciones = [];
-                      
-                      if (tasaRes < 60) {
-                        recomendaciones.push({ tipo: 'alerta', texto: `La tasa de resolución es del ${tasaRes}%. Objetivo recomendado: 80%+. Considerar asignar responsables fijos por categoría.` });
-                      } else if (tasaRes >= 80) {
-                        recomendaciones.push({ tipo: 'exito', texto: `Excelente tasa de resolución del ${tasaRes}%. El equipo está respondiendo bien a las incidencias.` });
-                      } else {
-                        recomendaciones.push({ tipo: 'atencion', texto: `Tasa de resolución del ${tasaRes}%. Hay margen de mejora, el objetivo ideal es superar el 80%.` });
-                      }
+                      const prompt = `Sos un analista de operaciones retail. Analizá los siguientes datos de incidencias de FERNI (cadena de 9 tiendas en Córdoba, Argentina) y generá un informe ejecutivo breve, práctico y directo en español.
 
-                      if (catCritica && catCriticaId[1] >= 3) {
-                        recomendaciones.push({ tipo: 'alerta', texto: `"${catCritica.icon} ${catCritica.nombre}" tiene ${catCriticaId[1]} incidencias abiertas. Recomendación: priorizar esta categoría esta semana.` });
-                      }
+DATOS DEL PERÍODO: ${getTextoPeriodo()}
+- Total reportes: ${totalR}
+- Abiertos: ${abiertos} | Resueltos: ${resueltos} | Tasa resolución: ${tasaRes}%
+- Tiempo promedio resolución: ${tiempoPromedio !== null ? tiempoPromedio + 'hs' : 'sin datos'}
+- Por categoría: ${porCategoria.map(c => `${c.nombre} (${c.total} total, ${c.abiertos} abiertos)`).join(', ')}
+${porSucursal ? `- Por sucursal: ${porSucursal}` : `- Sucursal analizada: ${SUCURSALES.find(s => s.id === sucursalActiva)?.nombre}`}
 
-                      if (peorCategoria && peorCategoria.tasa < 50) {
-                        recomendaciones.push({ tipo: 'atencion', texto: `"${peorCategoria.icon} ${peorCategoria.nombre}" tiene la tasa más baja (${peorCategoria.tasa}%). Revisar si hay bloqueos o falta de recursos.` });
-                      }
+Generá un informe con:
+1. Situación general (1-2 oraciones)
+2. Puntos críticos que requieren acción inmediata (si los hay)
+3. Lo que está funcionando bien
+4. 2-3 recomendaciones concretas y accionables
 
-                      if (tiempoPromedio !== null) {
-                        if (tiempoPromedio > 72) {
-                          recomendaciones.push({ tipo: 'alerta', texto: `Tiempo promedio de resolución: ${tiempoPromedio}hs (~${Math.round(tiempoPromedio/24)} días). Es alto. Definir SLAs por categoría puede mejorar esto.` });
-                        } else if (tiempoPromedio <= 24) {
-                          recomendaciones.push({ tipo: 'exito', texto: `Tiempo promedio de resolución: ${tiempoPromedio}hs. Respuesta rápida del equipo.` });
-                        } else {
-                          recomendaciones.push({ tipo: 'atencion', texto: `Tiempo promedio de resolución: ${tiempoPromedio}hs (~${Math.round(tiempoPromedio/24)} días). Aceptable, pero se puede mejorar.` });
-                        }
-                      }
+Sé directo, usa emojis ocasionalmente, y evitá palabras genéricas. Máximo 200 palabras.`;
 
-                      if (topResolvedor) {
-                        recomendaciones.push({ tipo: 'exito', texto: `${topResolvedor.nombre} lidera las resoluciones con ${topResolvedor.count} problemas resueltos. Reconocer su compromiso.` });
+                      try {
+                        const response = await fetch("https://api.anthropic.com/v1/messages", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            model: "claude-sonnet-4-20250514",
+                            max_tokens: 1000,
+                            messages: [{ role: "user", content: prompt }]
+                          })
+                        });
+                        const data = await response.json();
+                        const texto = data.content?.find(b => b.type === 'text')?.text || 'No se pudo generar el análisis.';
+                        setAnalisisTexto(texto);
+                      } catch (error) {
+                        setAnalisisTexto('Error al conectar con el servicio de análisis. Verificá tu conexión.');
+                      } finally {
+                        setCargandoAnalisis(false);
                       }
-
-                      if (tendencia === 'mejorando') {
-                        recomendaciones.push({ tipo: 'exito', texto: 'Tendencia positiva: la tasa de resolución viene mejorando en el período reciente.' });
-                      } else if (tendencia === 'empeorando') {
-                        recomendaciones.push({ tipo: 'alerta', texto: 'Tendencia negativa: la tasa de resolución viene bajando. Revisar carga de trabajo y recursos.' });
-                      }
-
-                      if (sucCritica && sucCritica.abiertos >= 3) {
-                        recomendaciones.push({ tipo: 'atencion', texto: `${sucCritica.nombre} tiene ${sucCritica.abiertos} incidencias abiertas, más que otras sucursales. Requiere atención.` });
-                      }
-
-                      if (abiertosR.length === 0 && totalR > 0) {
-                        recomendaciones.push({ tipo: 'exito', texto: '¡No hay incidencias abiertas! Todas resueltas. Excelente trabajo del equipo.' });
-                      }
-
-                      return recomendaciones;
                     };
-
-                    const [mostrarAnalisis, setMostrarAnalisis] = useState(false);
-                    const analisis = mostrarAnalisis ? generarAnalisis() : null;
 
                     return (
                       <div className="bg-white rounded-lg p-6 shadow">
                         <button 
-                          onClick={() => setMostrarAnalisis(!mostrarAnalisis)}
+                          onClick={() => {
+                            if (mostrarAnalisis) {
+                              setMostrarAnalisis(false);
+                              setAnalisisTexto('');
+                            } else {
+                              generarAnalisisIA();
+                            }
+                          }}
                           className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-4 rounded-lg font-semibold hover:from-purple-700 hover:to-indigo-700 transition flex items-center justify-center gap-3 text-lg"
                         >
                           <span className="text-2xl">🧠</span>
-                          {mostrarAnalisis ? 'Ocultar Análisis' : 'Generar Análisis Inteligente'}
+                          {mostrarAnalisis ? 'Ocultar Análisis' : 'Generar Análisis con IA'}
                         </button>
                         
-                        {mostrarAnalisis && analisis && analisis.length > 0 && (
-                          <div className="mt-6 space-y-3">
-                            <h3 className="font-bold text-gray-800 text-lg mb-4">📋 Informe de Situación</h3>
-                            {analisis.map((item, idx) => (
-                              <div key={idx} className={`p-4 rounded-lg border-l-4 ${
-                                item.tipo === 'alerta' ? 'bg-red-50 border-red-500' :
-                                item.tipo === 'atencion' ? 'bg-yellow-50 border-yellow-500' :
-                                'bg-green-50 border-green-500'
-                              }`}>
-                                <div className="flex items-start gap-3">
-                                  <span className="text-xl mt-0.5">
-                                    {item.tipo === 'alerta' ? '🔴' : item.tipo === 'atencion' ? '🟡' : '🟢'}
-                                  </span>
-                                  <p className={`text-sm font-medium ${
-                                    item.tipo === 'alerta' ? 'text-red-800' :
-                                    item.tipo === 'atencion' ? 'text-yellow-800' :
-                                    'text-green-800'
-                                  }`}>{item.texto}</p>
-                                </div>
+                        {mostrarAnalisis && (
+                          <div className="mt-6">
+                            {cargandoAnalisis ? (
+                              <div className="flex flex-col items-center py-8 gap-3">
+                                <div className="w-10 h-10 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+                                <p className="text-gray-500 text-sm">Analizando datos...</p>
                               </div>
-                            ))}
-                            <div className="text-xs text-gray-400 mt-4 text-center">
-                              Análisis generado sobre {reportesFiltrados.length} reportes • {getTextoPeriodo()}
-                            </div>
-                          </div>
-                        )}
-                        
-                        {mostrarAnalisis && (!analisis || analisis.length === 0) && (
-                          <div className="mt-4 text-center text-gray-500 py-4">
-                            No hay suficientes datos para generar análisis en este período.
+                            ) : analisisTexto ? (
+                              <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-5 border border-purple-100">
+                                <div className="flex items-center gap-2 mb-4">
+                                  <span className="text-xl">🤖</span>
+                                  <span className="font-bold text-purple-900">Análisis de IA</span>
+                                  <span className="text-xs text-purple-400 ml-auto">{getTextoPeriodo()}</span>
+                                </div>
+                                <div className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">{analisisTexto}</div>
+                                <button 
+                                  onClick={generarAnalisisIA}
+                                  className="mt-4 text-xs text-purple-600 hover:text-purple-800 underline"
+                                >
+                                  🔄 Regenerar análisis
+                                </button>
+                              </div>
+                            ) : null}
                           </div>
                         )}
                       </div>
