@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#1E3A5F">
+    <meta name="theme-color" content="#0F0F0F">
     <title>FERNI - Sistema de Incidencias</title>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
@@ -18,6 +18,144 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+      * { font-family: 'Outfit', sans-serif !important; }
+
+      body {
+        background: #0F0F0F !important;
+        color: #F0EDE8 !important;
+      }
+
+      /* Superficies */
+      .bg-white { background: #1A1A1A !important; }
+      .bg-gray-50 { background: #0F0F0F !important; }
+      .bg-gray-100 { background: #222222 !important; }
+      .bg-gray-200 { background: #2A2A2A !important; }
+
+      /* Textos */
+      .text-gray-800, .text-gray-900 { color: #F0EDE8 !important; }
+      .text-gray-700 { color: #C8C5BF !important; }
+      .text-gray-600 { color: #999994 !important; }
+      .text-gray-500, .text-gray-400 { color: #666660 !important; }
+
+      /* Bordes */
+      .border-gray-100, .border-gray-200, .border-gray-300 { border-color: #2A2A2A !important; }
+
+      /* Headers */
+      .bg-blue-600 { background: #1A1A1A !important; border-bottom: 1px solid #2A2A2A !important; }
+      .bg-gradient-to-r { background: #1A1A1A !important; border-bottom: 1px solid #2A2A2A !important; }
+      .text-blue-100 { color: #666660 !important; }
+      .from-blue-600, .to-indigo-600 { --tw-gradient-from: #1A1A1A !important; --tw-gradient-to: #1A1A1A !important; }
+
+      /* Botón azul principal */
+      .bg-blue-600 { background: #F0EDE8 !important; }
+      .text-white { color: #0F0F0F !important; }
+      .hover\:bg-blue-700:hover { background: #D8D5CF !important; }
+
+      /* Botón verde resolver */
+      .bg-green-600 { background: #F0EDE8 !important; }
+      .hover\:bg-green-700:hover { background: #D8D5CF !important; }
+
+      /* Botón rojo eliminar */
+      .bg-red-600 { background: #FF4D4D !important; color: #0F0F0F !important; }
+      .hover\:bg-red-700:hover { background: #E03E3E !important; }
+
+      /* Estados */
+      .bg-red-100 { background: rgba(255,77,77,0.12) !important; }
+      .text-red-700 { color: #FF4D4D !important; }
+      .bg-green-100 { background: rgba(77,255,145,0.1) !important; }
+      .text-green-700 { color: #4DFF91 !important; }
+
+      /* Inputs */
+      input, textarea, select {
+        background: #1A1A1A !important;
+        color: #F0EDE8 !important;
+        border-color: #2A2A2A !important;
+      }
+      input::placeholder, textarea::placeholder { color: #666660 !important; }
+      input:focus, textarea:focus { border-color: #666660 !important; }
+
+      /* Cards con sombra → sin sombra, con borde */
+      .shadow, .shadow-md, .shadow-lg {
+        box-shadow: none !important;
+        border: 1px solid #2A2A2A !important;
+      }
+
+      /* Rounded */
+      .rounded-lg, .rounded-xl { border-radius: 12px !important; }
+      .rounded-full { border-radius: 9999px !important; }
+
+      /* Botón flotante + */
+      .fixed.bottom-6.right-6 {
+        border-radius: 14px !important;
+        background: #F0EDE8 !important;
+        color: #0F0F0F !important;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
+        width: 52px !important;
+        height: 52px !important;
+      }
+
+      /* Botón volver */
+      .text-blue-100.hover\:text-white { color: #666660 !important; }
+
+      /* Badges de estado (pills) */
+      .bg-red-100.text-red-700 { background: rgba(255,77,77,0.12) !important; color: #FF4D4D !important; }
+      .bg-green-100.text-green-700 { background: rgba(77,255,145,0.1) !important; color: #4DFF91 !important; }
+
+      /* Análisis inteligente */
+      .bg-red-50 { background: rgba(255,77,77,0.08) !important; }
+      .border-red-500 { border-color: #FF4D4D !important; }
+      .text-red-800 { color: #FF4D4D !important; }
+      .bg-yellow-50 { background: rgba(255,184,77,0.08) !important; }
+      .border-yellow-500 { border-color: #FFB84D !important; }
+      .text-yellow-800 { color: #FFB84D !important; }
+      .bg-green-50 { background: rgba(77,255,145,0.08) !important; }
+      .border-green-500 { border-color: #4DFF91 !important; }
+      .text-green-800 { color: #4DFF91 !important; }
+
+      /* Botón análisis */
+      .from-purple-600, .to-indigo-600 { background: #222222 !important; }
+      .hover\:from-purple-700:hover, .hover\:to-indigo-700:hover { background: #2A2A2A !important; }
+      .from-purple-600 { color: #F0EDE8 !important; }
+
+      /* Nuevo comentario fondo */
+      .bg-blue-50 { background: rgba(240,237,232,0.05) !important; }
+      .border-blue-200 { border-color: #2A2A2A !important; }
+      .text-blue-900, .text-blue-700 { color: #C8C5BF !important; }
+
+      /* Disabled */
+      .disabled\:bg-gray-300:disabled { background: #2A2A2A !important; color: #666660 !important; }
+
+      /* Login page */
+      .bg-blue-600.text-white { background: #1A1A1A !important; }
+      
+      /* Barra lateral de estado en tarjetas */
+      .border-l-4 { border-left-width: 3px !important; }
+
+      /* Filter/tab buttons activos */
+      .bg-blue-100 { background: #222222 !important; }
+      .text-blue-800 { color: #F0EDE8 !important; }
+
+      /* Texto azul genérico */
+      .text-blue-600 { color: #F0EDE8 !important; }
+      .text-blue-700 { color: #C8C5BF !important; }
+
+      /* Stats numbers color */
+      .text-purple-600 { color: #C8C5BF !important; }
+
+      /* Dashboard gradient */
+      .from-blue-600.to-indigo-600 { background: #1A1A1A !important; }
+
+      /* Hover estados en lista */
+      .hover\:shadow-md:hover { box-shadow: none !important; border-color: #444440 !important; }
+
+      /* Canvas chart background */
+      canvas { filter: invert(0) !important; }
+
+      /* Print header */
+      .print-only { color: #F0EDE8 !important; }
+    </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script>
       if ('serviceWorker' in navigator) {
@@ -1159,13 +1297,13 @@
                                 {
                                   label: 'Abiertos',
                                   data: porCategoria.map(c => c.abiertos),
-                                  backgroundColor: '#EF4444',
+                                  backgroundColor: '#FF4D4D',
                                   borderRadius: 4
                                 },
                                 {
                                   label: 'Resueltos',
                                   data: porCategoria.map(c => c.resueltos),
-                                  backgroundColor: '#10B981',
+                                  backgroundColor: '#4DFF91',
                                   borderRadius: 4
                                 }
                               ]
@@ -1177,18 +1315,20 @@
                               plugins: {
                                 legend: {
                                   position: 'top',
+                                  labels: { color: '#F0EDE8' }
                                 }
                               },
                               scales: {
                                 x: {
                                   stacked: false,
+                                  ticks: { color: '#666660' },
+                                  grid: { color: '#2A2A2A' }
                                 },
                                 y: {
                                   stacked: false,
                                   beginAtZero: true,
-                                  ticks: {
-                                    stepSize: 1
-                                  }
+                                  ticks: { stepSize: 1, color: '#666660' },
+                                  grid: { color: '#2A2A2A' }
                                 }
                               }
                             }
