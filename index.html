@@ -401,14 +401,33 @@
         // ========================================
         // COMPONENTE PRINCIPAL
         // ========================================
+        const SESSION_KEY = 'ferni_session';
+
+        const guardarSesion = (datos) => {
+          localStorage.setItem(SESSION_KEY, JSON.stringify(datos));
+        };
+
+        const cargarSesion = () => {
+          try {
+            const raw = localStorage.getItem(SESSION_KEY);
+            return raw ? JSON.parse(raw) : null;
+          } catch { return null; }
+        };
+
+        const borrarSesion = () => {
+          localStorage.removeItem(SESSION_KEY);
+        };
+
         function FerniApp() {
-          const [vista, setVista] = useState('login');
-          const [usuario, setUsuario] = useState(null);
-          const [usuarioEmail, setUsuarioEmail] = useState(null);
-          const [sucursalUsuario, setSucursalUsuario] = useState(null);
-          const [sucursalActiva, setSucursalActiva] = useState(null);
-          const [esAdmin, setEsAdmin] = useState(false);
-          const [esGerente, setEsGerente] = useState(false);
+          const sesionGuardada = cargarSesion();
+
+          const [vista, setVista] = useState(sesionGuardada ? 'lista' : 'login');
+          const [usuario, setUsuario] = useState(sesionGuardada?.usuario || null);
+          const [usuarioEmail, setUsuarioEmail] = useState(sesionGuardada?.usuarioEmail || null);
+          const [sucursalUsuario, setSucursalUsuario] = useState(sesionGuardada?.sucursalUsuario || null);
+          const [sucursalActiva, setSucursalActiva] = useState(sesionGuardada?.sucursalActiva || null);
+          const [esAdmin, setEsAdmin] = useState(sesionGuardada?.esAdmin || false);
+          const [esGerente, setEsGerente] = useState(sesionGuardada?.esGerente || false);
           const [reportes, setReportes] = useState([]);
           const [reportesNuevos, setReportesNuevos] = useState([]);
           const [contadorNuevos, setContadorNuevos] = useState(0);
@@ -526,19 +545,23 @@
                   alert(`⚠️ El usuario ${emailLower} corresponde a ${SUCURSALES.find(s => s.id === gerenteSucursal)?.nombre}. Seleccioná la sucursal correcta.`);
                   return;
                 }
-                setUsuario(nombre.trim());
-                setUsuarioEmail(emailLower);
-                setSucursalUsuario(sucursal);
-                setSucursalActiva(sucursal);
+                const sesion = { usuario: nombre.trim(), usuarioEmail: emailLower, sucursalUsuario: sucursal, sucursalActiva: sucursal, esAdmin: false, esGerente: true };
+                guardarSesion(sesion);
+                setUsuario(sesion.usuario);
+                setUsuarioEmail(sesion.usuarioEmail);
+                setSucursalUsuario(sesion.sucursalUsuario);
+                setSucursalActiva(sesion.sucursalActiva);
                 setEsAdmin(false);
                 setEsGerente(true);
                 setVista('lista');
               } else {
                 // Empleado común
-                setUsuario(nombre.trim());
-                setUsuarioEmail(emailLower);
-                setSucursalUsuario(sucursal);
-                setSucursalActiva(sucursal);
+                const sesion = { usuario: nombre.trim(), usuarioEmail: emailLower, sucursalUsuario: sucursal, sucursalActiva: sucursal, esAdmin: false, esGerente: false };
+                guardarSesion(sesion);
+                setUsuario(sesion.usuario);
+                setUsuarioEmail(sesion.usuarioEmail);
+                setSucursalUsuario(sesion.sucursalUsuario);
+                setSucursalActiva(sesion.sucursalActiva);
                 setEsAdmin(false);
                 setEsGerente(false);
                 setVista('lista');
@@ -549,8 +572,10 @@
               if (!email.trim() || !password.trim()) { alert('Completá email y contraseña'); return; }
               const admin = ADMINS.find(a => a.email === email && a.password === password);
               if (!admin) { alert('❌ Email o contraseña incorrectos'); return; }
-              setUsuario(admin.nombre);
-              setUsuarioEmail(email.trim().toLowerCase());
+              const sesion = { usuario: admin.nombre, usuarioEmail: email.trim().toLowerCase(), sucursalUsuario: 'TODAS', sucursalActiva: 'TODAS', esAdmin: true, esGerente: false };
+              guardarSesion(sesion);
+              setUsuario(sesion.usuario);
+              setUsuarioEmail(sesion.usuarioEmail);
               setSucursalUsuario('TODAS');
               setSucursalActiva('TODAS');
               setEsAdmin(true);
@@ -669,6 +694,9 @@
                       )}
                     </div>
                     <button onClick={() => setVista('dashboard')} className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition text-sm">📊 Dashboard</button>
+                  </div>
+                  <div className="flex justify-end mt-2">
+                    <button onClick={() => { borrarSesion(); setUsuario(null); setUsuarioEmail(null); setSucursalUsuario(null); setSucursalActiva(null); setEsAdmin(false); setEsGerente(false); setReportes([]); setVista('login'); }} className="text-xs text-blue-200 hover:text-white underline opacity-70 hover:opacity-100 transition">Cerrar sesión</button>
                   </div>
                   
                   <div className="grid grid-cols-3 gap-3">
