@@ -283,6 +283,18 @@
         // Sucursales con módulo de horarios habilitado (piloto)
         const SUCURSALES_CON_HORARIOS = ['F3'];
 
+        // ========================================
+        // CONSTANTES MÓDULO ASISTENTE
+        // ========================================
+        const ASISTENTE_WORKER_URL = 'https://misty-term-8dc5ferni-asistente.lucas-ramirez2210.workers.dev/';
+        const SUGERENCIAS_INICIALES = [
+          '¿Cuántos días tengo por casamiento?',
+          '¿Cómo solicito un adelanto de sueldo?',
+          'Garantía de productos Liliana',
+          '¿Cómo armo una puntera?',
+          'Qué hago ante un accidente laboral'
+        ];
+
         // Áreas por defecto que se crean al activar el módulo en una sucursal
         const AREAS_DEFAULT = [
           { id: 'cajas', nombre: 'Línea de Cajas', color: '#1D9E75', roles: ['24hs', '48hs', 'Colíder cajas', 'Líder cajas'] },
@@ -893,6 +905,20 @@
                       <div className="text-xs text-blue-100">Resueltos</div>
                     </div>
                   </div>
+                </div>
+
+                <div className="p-4">
+                  <button
+                    onClick={() => setVista('asistente')}
+                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl p-4 shadow-lg hover:shadow-xl transition flex items-center gap-3 text-left"
+                  >
+                    <div className="text-3xl">🤖</div>
+                    <div className="flex-1">
+                      <div className="font-bold text-sm">Asistente FERNI</div>
+                      <div className="text-xs text-purple-100">Consultá procedimientos, beneficios y políticas</div>
+                    </div>
+                    <div className="text-2xl">→</div>
+                  </button>
                 </div>
 
                 <div className="p-4 bg-white border-b flex gap-2 overflow-x-auto">
@@ -1843,6 +1869,211 @@
           // ========================================
           // VISTA HORARIOS — Módulo completo
           // ========================================
+          // ========================================
+          // VISTA ASISTENTE
+          // ========================================
+          const VistaAsistente = () => {
+            const [mensajes, setMensajes] = useState([
+              {
+                rol: 'asistente',
+                texto: `Hola ${usuario}, soy el Asistente Virtual de FERNI. Puedo ayudarte con consultas sobre procedimientos, beneficios, garantías, manejo de mercadería, gestión ambiental, y más. ¿En qué puedo ayudarte?`,
+                timestamp: Date.now()
+              }
+            ]);
+            const [input, setInput] = useState('');
+            const [cargando, setCargando] = useState(false);
+            const [errorRed, setErrorRed] = useState(null);
+            const mensajesEndRef = useRef(null);
+
+            useEffect(() => {
+              mensajesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }, [mensajes, cargando]);
+
+            const enviarConsulta = async (preguntaTexto) => {
+              const pregunta = (preguntaTexto || input).trim();
+              if (!pregunta || cargando) return;
+
+              const mensajeUsuario = { rol: 'usuario', texto: pregunta, timestamp: Date.now() };
+              setMensajes(prev => [...prev, mensajeUsuario]);
+              setInput('');
+              setCargando(true);
+              setErrorRed(null);
+
+              try {
+                const response = await fetch(ASISTENTE_WORKER_URL, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ pregunta })
+                });
+
+                if (!response.ok) {
+                  throw new Error(`HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                const respuestaTexto = data.respuesta || 'No pude generar una respuesta. Intentá de nuevo.';
+                const encontrado = data.encontrado !== false;
+                const procedimientos = Array.isArray(data.procedimientos_consultados) ? data.procedimientos_consultados : [];
+
+                const mensajeAsistente = {
+                  rol: 'asistente',
+                  texto: respuestaTexto,
+                  encontrado,
+                  procedimientos,
+                  timestamp: Date.now()
+                };
+                setMensajes(prev => [...prev, mensajeAsistente]);
+
+                try {
+                  await db.collection('consultas_asistente').add({
+                    usuario: usuario || 'desconocido',
+                    usuario_email: usuarioEmail || null,
+                    sucursal: sucursalActiva || sucursalUsuario || 'desconocida',
+                    es_admin: !!esAdmin,
+                    es_gerente: !!esGerente,
+                    pregunta,
+                    respuesta: respuestaTexto,
+                    encontrado,
+                    procedimientos_consultados: procedimientos,
+                    fecha: firebase.firestore.FieldValue.serverTimestamp()
+                  });
+                } catch (errFs) {
+                  console.warn('No se pudo guardar telemetría:', errFs);
+                }
+
+              } catch (error) {
+                console.error('Error al consultar al asistente:', error);
+                setErrorRed('No pude conectar con el asistente. Verificá tu conexión e intentá de nuevo.');
+                setMensajes(prev => [...prev, {
+                  rol: 'asistente',
+                  texto: 'Disculpá, hubo un problema técnico. Intentá de nuevo en unos segundos. Si el problema persiste, consultá con tu líder de sucursal.',
+                  encontrado: false,
+                  timestamp: Date.now()
+                }]);
+              } finally {
+                setCargando(false);
+              }
+            };
+
+            const handleKeyDown = (e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                enviarConsulta();
+              }
+            };
+
+            return (
+              <div className="min-h-screen bg-gray-50 flex flex-col">
+                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 shadow-lg">
+                  <div className="flex items-center gap-3 mb-2">
+                    <button onClick={() => setVista('lista')} className="text-blue-100 hover:text-white text-sm">
+                      ← Volver
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="text-3xl">🤖</div>
+                    <div className="flex-1">
+                      <h1 className="text-xl font-bold">Asistente FERNI</h1>
+                      <p className="text-blue-100 text-xs">Consultá procedimientos, beneficios y políticas</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-32">
+                  {mensajes.map((msg, idx) => (
+                    <div key={idx} className={`flex ${msg.rol === 'usuario' ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[85%] rounded-2xl px-4 py-3 ${
+                        msg.rol === 'usuario'
+                          ? 'bg-blue-600 text-white rounded-br-sm'
+                          : msg.encontrado === false
+                            ? 'bg-yellow-50 border border-yellow-300 text-gray-800 rounded-bl-sm'
+                            : 'bg-white shadow text-gray-800 rounded-bl-sm'
+                      }`}>
+                        {msg.rol === 'asistente' && (
+                          <div className="text-xs text-gray-500 mb-1 flex items-center gap-1">
+                            <span>🤖</span>
+                            <span>Asistente FERNI</span>
+                            {msg.encontrado === false && <span className="ml-1 text-yellow-600">• Sin info en base</span>}
+                          </div>
+                        )}
+                        <div className="whitespace-pre-wrap text-sm leading-relaxed">{msg.texto}</div>
+                        {msg.procedimientos && msg.procedimientos.length > 0 && (
+                          <div className="mt-2 pt-2 border-t border-gray-200 text-xs text-gray-500">
+                            Referencias: {msg.procedimientos.join(', ')}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+
+                  {cargando && (
+                    <div className="flex justify-start">
+                      <div className="bg-white shadow rounded-2xl rounded-bl-sm px-4 py-3">
+                        <div className="flex items-center gap-2 text-gray-500 text-sm">
+                          <div className="flex gap-1">
+                            <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0ms'}}></span>
+                            <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '150ms'}}></span>
+                            <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '300ms'}}></span>
+                          </div>
+                          <span>Buscando en la base de conocimiento...</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {mensajes.length === 1 && !cargando && (
+                    <div className="mt-6">
+                      <div className="text-xs text-gray-500 mb-2 px-1">Sugerencias para empezar:</div>
+                      <div className="flex flex-col gap-2">
+                        {SUGERENCIAS_INICIALES.map((sug, i) => (
+                          <button
+                            key={i}
+                            onClick={() => enviarConsulta(sug)}
+                            className="text-left bg-white hover:bg-blue-50 border border-gray-200 rounded-lg px-4 py-2 text-sm text-gray-700 transition shadow-sm"
+                          >
+                            {sug}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {errorRed && (
+                    <div className="bg-red-50 border border-red-300 text-red-700 rounded-lg px-4 py-2 text-sm">
+                      {errorRed}
+                    </div>
+                  )}
+
+                  <div ref={mensajesEndRef}></div>
+                </div>
+
+                <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-3 shadow-lg">
+                  <div className="flex gap-2 max-w-3xl mx-auto">
+                    <input
+                      type="text"
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      disabled={cargando}
+                      placeholder="Escribí tu consulta..."
+                      className="flex-1 px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:border-blue-500 text-sm"
+                    />
+                    <button
+                      onClick={() => enviarConsulta()}
+                      disabled={cargando || !input.trim()}
+                      className="bg-blue-600 text-white px-5 py-3 rounded-full font-medium hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                    >
+                      Enviar
+                    </button>
+                  </div>
+                  <div className="text-center text-[10px] text-gray-400 mt-1">
+                    El Asistente responde solo con información cargada en la base.
+                  </div>
+                </div>
+              </div>
+            );
+          };
+
           const VistaHorarios = () => {
             const [vistaHor, setVistaHor] = useState('home'); // home | config | equipo | armar | tablero
             const [configHor, setConfigHor] = useState(null);
@@ -3041,6 +3272,7 @@
               {vista === 'detalle' && <VistaDetalle />}
               {vista === 'dashboard' && <VistaDashboard />}
               {vista === 'horarios' && <VistaHorarios />}
+              {vista === 'asistente' && <VistaAsistente />}
             </div>
           );
         }
