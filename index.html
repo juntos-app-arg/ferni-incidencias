@@ -1924,8 +1924,9 @@
                 };
                 setMensajes(prev => [...prev, mensajeAsistente]);
 
+                // Telemetría fire-and-forget: no bloquea el chat si Firestore tiene problemas
                 try {
-                  await db.collection('consultas_asistente').add({
+                  db.collection('consultas_asistente').add({
                     usuario: usuario || 'desconocido',
                     usuario_email: usuarioEmail || null,
                     sucursal: sucursalActiva || sucursalUsuario || 'desconocida',
@@ -1936,6 +1937,8 @@
                     encontrado,
                     procedimientos_consultados: procedimientos,
                     fecha: firebase.firestore.FieldValue.serverTimestamp()
+                  }).catch(errFs => {
+                    console.warn('No se pudo guardar telemetría:', errFs);
                   });
                 } catch (errFs) {
                   console.warn('No se pudo guardar telemetría:', errFs);
