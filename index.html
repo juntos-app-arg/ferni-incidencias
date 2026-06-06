@@ -886,64 +886,44 @@
 
             return (
               <div className="min-h-screen bg-gray-50">
-                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 shadow-lg">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-1">
-                        <h1 className="text-2xl font-bold">FERNI Incidencias</h1>
+                {/* Header compacto */}
+                <div style={{ background: '#1E3A5F', color: 'white', padding: '16px 20px 12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>FERNI 3</h1>
                         {contadorNuevos > 0 && (
-                          <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
+                          <span style={{ background: '#FF4D4D', color: 'white', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20 }} className="animate-pulse">
                             {contadorNuevos} nuevo{contadorNuevos > 1 ? 's' : ''}
                           </span>
                         )}
                       </div>
-                      <p className="text-blue-100 text-sm">Hola, {usuario} {esAdmin && '👑'}</p>
-                      <div className="mt-1 text-blue-100 text-sm">📍 FERNI 3</div>
+                      <div style={{ fontSize: 13, opacity: 0.7, marginTop: 2 }}>Hola, {usuario} {esAdmin && '👑'}</div>
                     </div>
-                    <div className="flex gap-2 flex-wrap justify-end">
-                      <button onClick={() => setVista('horarios')} className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition text-sm">📅 Horarios</button>
-                      <button onClick={() => setVista('vencimientos')} className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition text-sm">📦 Vencimientos</button>
-                      <button onClick={() => setVista('dashboard')} className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition text-sm">📊 Dashboard</button>
-                    </div>
+                    <button onClick={() => { borrarSesion(); setUsuario(null); setUsuarioEmail(null); setSucursalUsuario(null); setSucursalActiva(null); setEsAdmin(false); setEsGerente(false); setEsLider(false); setAreaLider(null); setEsEncargadoVencimientos(false); setReportes([]); setVista('login'); }} style={{ fontSize: 12, opacity: 0.6, background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}>Salir</button>
                   </div>
-                  <div className="flex justify-end mt-2">
-                    <button onClick={() => { borrarSesion(); setUsuario(null); setUsuarioEmail(null); setSucursalUsuario(null); setSucursalActiva(null); setEsAdmin(false); setEsGerente(false); setEsLider(false); setAreaLider(null); setEsEncargadoVencimientos(false); setReportes([]); setVista('login'); }} className="text-xs text-blue-200 hover:text-white underline opacity-70 hover:opacity-100 transition">Cerrar sesión</button>
-                  </div>
-                  
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="bg-white/10 rounded-lg p-3 text-center">
-                      <div className="text-2xl font-bold">{reportes.length}</div>
-                      <div className="text-xs text-blue-100">Total</div>
-                    </div>
-                    <div className="bg-white/10 rounded-lg p-3 text-center">
-                      <div className="text-2xl font-bold">{reportes.filter(r => r.estado === 'abierto').length}</div>
-                      <div className="text-xs text-blue-100">Abiertos</div>
-                    </div>
-                    <div className="bg-white/10 rounded-lg p-3 text-center">
-                      <div className="text-2xl font-bold">{reportes.filter(r => r.estado === 'resuelto').length}</div>
-                      <div className="text-xs text-blue-100">Resueltos</div>
-                    </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginTop: 14 }}>
+                    {[
+                      { label: 'Total', val: reportes.length },
+                      { label: 'Abiertos', val: reportes.filter(r => r.estado === 'abierto').length },
+                      { label: 'Resueltos', val: reportes.filter(r => r.estado === 'resuelto').length }
+                    ].map(k => (
+                      <div key={k.label} style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 10, padding: '10px 8px', textAlign: 'center' }}>
+                        <div style={{ fontSize: 22, fontWeight: 700 }}>{k.val}</div>
+                        <div style={{ fontSize: 11, opacity: 0.7 }}>{k.label}</div>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
-                <div className="p-4">
-                  <button
-                    onClick={() => setVista('asistente')}
-                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl p-4 shadow-lg hover:shadow-xl transition flex items-center gap-3 text-left"
-                  >
-                    <div className="text-3xl">🤖</div>
-                    <div className="flex-1">
-                      <div className="font-bold text-sm">Asistente FERNI</div>
-                      <div className="text-xs text-purple-100">Consultá procedimientos, beneficios y políticas</div>
-                    </div>
-                    <div className="text-2xl">→</div>
-                  </button>
-                </div>
-
-                <div className="p-4 bg-white border-b flex gap-2 overflow-x-auto">
+                {/* Filtros */}
+                <div style={{ display: 'flex', gap: 8, padding: '12px 16px', background: '#1A1A1A', overflowX: 'auto', borderBottom: '1px solid #2A2A2A' }}>
                   {['todos', 'abierto', 'resuelto'].map(estado => (
-                    <button key={estado} onClick={() => setFiltroEstado(estado)} className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition ${filtroEstado === estado ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
-                      {estado === 'todos' ? '📋 Todos' : estado === 'abierto' ? '🔴 Abiertos' : '✅ Resueltos'}
+                    <button key={estado} onClick={() => setFiltroEstado(estado)}
+                      style={{ padding: '7px 16px', borderRadius: 20, fontWeight: 600, whiteSpace: 'nowrap', fontSize: 13, border: 'none', cursor: 'pointer',
+                        background: filtroEstado === estado ? '#4ECDC4' : '#2A2A2A',
+                        color: filtroEstado === estado ? '#0F0F0F' : '#aaa' }}>
+                      {estado === 'todos' ? 'Todos' : estado === 'abierto' ? 'Abiertos' : 'Resueltos'}
                     </button>
                   ))}
                 </div>
@@ -994,7 +974,7 @@
                   )}
                 </div>
 
-                <button onClick={() => setVista('crear')} className="fixed bottom-6 right-6 bg-blue-600 text-white w-16 h-16 rounded-full shadow-lg hover:bg-blue-700 transition flex items-center justify-center text-3xl">+</button>
+                <button onClick={() => setVista('crear')} className="fixed bottom-20 right-5 bg-blue-600 text-white w-14 h-14 rounded-2xl shadow-lg hover:bg-blue-700 transition flex items-center justify-center text-2xl">+</button>
               </div>
             );
           };
@@ -1493,7 +1473,7 @@
             };
 
             return (
-              <div className="min-h-screen bg-gray-50" id="dashboard-container">
+              <div className="min-h-screen bg-gray-50 pb-20" id="dashboard-container">
                 <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 no-print">
                   <div className="flex justify-between items-center mb-4">
                     <button onClick={() => setVista('lista')} className="text-blue-100 hover:text-white">← Volver</button>
@@ -1990,7 +1970,7 @@
             };
 
             return (
-              <div className="min-h-screen bg-gray-50 flex flex-col">
+              <div className="min-h-screen bg-gray-50 flex flex-col pb-20">
                 <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 shadow-lg">
                   <div className="flex items-center gap-3 mb-2">
                     <button onClick={() => setVista('lista')} className="text-blue-100 hover:text-white text-sm">
@@ -2312,42 +2292,35 @@
 
             // Renderizar sub-vistas
             return (
-              <div className="min-h-screen bg-gray-900 text-gray-100">
+              <div className="min-h-screen bg-gray-900 text-gray-100 pb-20">
                 {/* Header */}
-                <div className="bg-gray-800 border-b border-gray-700 p-4 sticky top-0 z-10">
-                  <div className="max-w-6xl mx-auto flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                      {vistaHor !== 'home' && (
-                        <button onClick={() => setVistaHor('home')} className="text-gray-400 hover:text-white text-sm">← Volver</button>
-                      )}
-                      <div>
-                        <div className="text-xs text-gray-500 uppercase tracking-wider">{sucursalActiva} · {sucursalNombre}</div>
-                        <h1 className="text-xl font-bold">
-                          {vistaHor === 'home' && '📅 Horarios'}
-                          {vistaHor === 'config' && '⚙️ Configuración'}
-                          {vistaHor === 'equipo' && '👥 Mi Equipo'}
-                          {vistaHor === 'armar' && '📋 Armar Horario'}
-                          {vistaHor === 'tablero' && '📊 Tablero Consolidado'}
-                        </h1>
+                <div style={{ background: '#1E3A5F', padding: '14px 16px', position: 'sticky', top: 0, zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    {vistaHor !== 'home' && (
+                      <button onClick={() => setVistaHor('home')} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: 'white', padding: '6px 12px', borderRadius: 8, fontSize: 13, cursor: 'pointer' }}>←</button>
+                    )}
+                    <div>
+                      <div style={{ fontSize: 11, opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'white' }}>FERNI 3 · Horarios</div>
+                      <div style={{ fontSize: 17, fontWeight: 700, color: 'white' }}>
+                        {vistaHor === 'home' && 'Inicio'}
+                        {vistaHor === 'config' && 'Configuración'}
+                        {vistaHor === 'equipo' && 'Mi Equipo'}
+                        {vistaHor === 'armar' && 'Armar Horario'}
+                        {vistaHor === 'tablero' && 'Tablero'}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="text-right">
-                        <div className="text-sm font-medium">{usuario}</div>
-                        <div className="text-xs text-gray-500">
-                          {esAdmin && '👔 Admin'}
-                          {esGerente && '🏢 Gerente'}
-                          {esLider && `🎯 Líder ${configHor.areas.find(a => a.id === areaLider)?.nombre || ''}`}
-                          {!esAdmin && !esGerente && !esLider && '👤 Empleado'}
-                        </div>
-                      </div>
-                      {!esLider && (
-                        <button onClick={volverAIncidencias} className="bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded-lg text-xs">← Incidencias</button>
-                      )}
-                      {esLider && (
-                        <button onClick={() => { borrarSesion(); setUsuario(null); setUsuarioEmail(null); setSucursalUsuario(null); setSucursalActiva(null); setEsAdmin(false); setEsGerente(false); setEsLider(false); setAreaLider(null); setReportes([]); setVista('login'); }} className="bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded-lg text-xs">Salir</button>
-                      )}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', textAlign: 'right' }}>
+                      {usuario}
+                      {esLider && <div style={{ fontSize: 11, opacity: 0.6 }}>{configHor.areas.find(a => a.id === areaLider)?.nombre}</div>}
                     </div>
+                    {!esLider && (
+                      <button onClick={volverAIncidencias} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: 'white', padding: '6px 12px', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>Inicio</button>
+                    )}
+                    {esLider && (
+                      <button onClick={() => { borrarSesion(); setUsuario(null); setUsuarioEmail(null); setSucursalUsuario(null); setSucursalActiva(null); setEsAdmin(false); setEsGerente(false); setEsLider(false); setAreaLider(null); setReportes([]); setVista('login'); }} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: 'white', padding: '6px 12px', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>Salir</button>
+                    )}
                   </div>
                 </div>
 
@@ -2706,10 +2679,14 @@
                 )}
 
                 {!esLider && (
-                  <div className="flex gap-2 mb-3 flex-wrap">
-                    <button onClick={() => { setFiltroArea('todos'); setFiltroSubcat('todas'); }} className={`px-3 py-1 rounded-full text-xs ${filtroArea === 'todos' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300'}`}>Todas</button>
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 12, overflowX: 'auto', paddingBottom: 4, WebkitOverflowScrolling: 'touch' }}>
+                    <button onClick={() => { setFiltroArea('todos'); setFiltroSubcat('todas'); }}
+                      style={{ padding: '6px 14px', borderRadius: 20, fontSize: 12, whiteSpace: 'nowrap', border: 'none', cursor: 'pointer', flexShrink: 0,
+                        background: filtroArea === 'todos' ? '#4ECDC4' : '#2A2A2A', color: filtroArea === 'todos' ? '#0F0F0F' : '#aaa', fontWeight: filtroArea === 'todos' ? 600 : 400 }}>Todas</button>
                     {configHor.areas.map(a => (
-                      <button key={a.id} onClick={() => { setFiltroArea(a.id); setFiltroSubcat('todas'); }} className={`px-3 py-1 rounded-full text-xs border ${filtroArea === a.id ? 'text-white' : 'bg-gray-800 text-gray-300 border-gray-700'}`} style={filtroArea === a.id ? { background: a.color + '33', borderColor: a.color } : {}}>{a.nombre}</button>
+                      <button key={a.id} onClick={() => { setFiltroArea(a.id); setFiltroSubcat('todas'); }}
+                        style={{ padding: '6px 14px', borderRadius: 20, fontSize: 12, whiteSpace: 'nowrap', cursor: 'pointer', flexShrink: 0, border: `1px solid ${filtroArea === a.id ? a.color : '#3A3A3A'}`,
+                          background: filtroArea === a.id ? a.color + '33' : '#2A2A2A', color: filtroArea === a.id ? 'white' : '#aaa', fontWeight: filtroArea === a.id ? 600 : 400 }}>{a.nombre}</button>
                     ))}
                   </div>
                 )}
@@ -3468,29 +3445,29 @@
             const inputStyle = { width: '100%', padding: '8px 10px', border: '1px solid #3A3A3A', borderRadius: 6, fontSize: 13, background: '#222', color: '#F0EDE8' };
 
             return (
-              <div style={{ minHeight: '100vh', background: '#0F0F0F', fontFamily: 'Outfit, sans-serif' }}>
+              <div style={{ minHeight: '100vh', background: '#0F0F0F', fontFamily: 'Outfit, sans-serif', paddingBottom: 80 }}>
                 {/* Header */}
                 <div style={headerStyle}>
                   <div>
-                    <div style={{ fontSize: 17, fontWeight: 600 }}>Control de Vencimientos</div>
-                    <div style={{ fontSize: 11, opacity: 0.6 }}>Sucursal F3 · {puedeEditar ? (esAdmin ? 'Admin' : 'Encargado') : 'Vista equipo'}</div>
+                    <div style={{ fontSize: 17, fontWeight: 600 }}>Vencimientos</div>
+                    <div style={{ fontSize: 11, opacity: 0.6 }}>FERNI 3 · {puedeEditar ? (esAdmin ? 'Admin' : 'Encargado') : 'Solo lectura'}</div>
                   </div>
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                     {esAdmin && (
                       <button onClick={() => { setMostrandoInvitaciones(!mostrandoInvitaciones); setMostrandoUmbrales(false); }}
-                        style={{ background: mostrandoInvitaciones ? 'rgba(255,107,53,0.4)' : 'rgba(255,255,255,0.15)', color: 'white', border: 'none', padding: '6px 14px', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>
+                        style={{ background: mostrandoInvitaciones ? 'rgba(255,107,53,0.4)' : 'rgba(255,255,255,0.15)', color: 'white', border: 'none', padding: '6px 12px', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>
                         Encargados
                       </button>
                     )}
                     {puedeEditar && (
                       <button onClick={() => { setMostrandoUmbrales(!mostrandoUmbrales); setMostrandoInvitaciones(false); }}
-                        style={{ background: 'rgba(255,255,255,0.15)', color: 'white', border: 'none', padding: '6px 14px', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>
-                        ⚙ Umbrales
+                        style={{ background: 'rgba(255,255,255,0.15)', color: 'white', border: 'none', padding: '6px 12px', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>
+                        Umbrales
                       </button>
                     )}
                     <button onClick={() => setVista('lista')}
-                      style={{ background: 'rgba(255,255,255,0.15)', color: 'white', border: 'none', padding: '6px 14px', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>
-                      ← Volver
+                      style={{ background: 'rgba(255,255,255,0.15)', color: 'white', border: 'none', padding: '6px 12px', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>
+                      ← Inicio
                     </button>
                   </div>
                 </div>
@@ -3603,30 +3580,30 @@
                   {puedeEditar && (
                     <div style={secStyle}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: '#F0EDE8', marginBottom: 14 }}>Registrar producto</div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr 0.9fr 0.6fr 0.9fr auto', gap: 10, alignItems: 'end' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                         <div>
                           <label style={labelStyle}>EAN / SKU *</label>
-                          <input type="text" placeholder="7790895001234" value={formEan} onChange={e => setFormEan(e.target.value)} style={inputStyle} />
+                          <input type="text" placeholder="ej: 7790895001234" value={formEan} onChange={e => setFormEan(e.target.value)} style={inputStyle} />
                         </div>
                         <div>
                           <label style={labelStyle}>Descripcion *</label>
-                          <input type="text" placeholder="Leche descremada 1L" value={formDesc} onChange={e => setFormDesc(e.target.value)} style={inputStyle} />
+                          <input type="text" placeholder="ej: Leche descremada 1L" value={formDesc} onChange={e => setFormDesc(e.target.value)} style={inputStyle} />
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                          <div>
+                            <label style={labelStyle}>Vencimiento *</label>
+                            <input type="date" value={formVto} onChange={e => setFormVto(e.target.value)} style={inputStyle} />
+                          </div>
+                          <div>
+                            <label style={labelStyle}>Cantidad</label>
+                            <input type="number" min="1" placeholder="ej: 12" value={formQty} onChange={e => setFormQty(e.target.value)} style={inputStyle} />
+                          </div>
                         </div>
                         <div>
-                          <label style={labelStyle}>Vencimiento *</label>
-                          <input type="date" value={formVto} onChange={e => setFormVto(e.target.value)} style={inputStyle} />
+                          <label style={labelStyle}>N° Remito (opcional)</label>
+                          <input type="text" placeholder="ej: REM-031" value={formRemito} onChange={e => setFormRemito(e.target.value)} style={inputStyle} />
                         </div>
-                        <div>
-                          <label style={labelStyle}>Cantidad</label>
-                          <input type="number" min="1" placeholder="12" value={formQty} onChange={e => setFormQty(e.target.value)} style={inputStyle} />
-                        </div>
-                        <div>
-                          <label style={labelStyle}>N° Remito</label>
-                          <input type="text" placeholder="opcional" value={formRemito} onChange={e => setFormRemito(e.target.value)} style={inputStyle} />
-                        </div>
-                        <div>
-                          <button onClick={agregarItem} style={{ background: '#1E3A5F', color: 'white', border: 'none', padding: '8px 16px', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', height: 36 }}>+ Agregar</button>
-                        </div>
+                        <button onClick={agregarItem} style={{ background: '#1E3A5F', color: 'white', border: 'none', padding: '12px', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer', width: '100%' }}>+ Agregar producto</button>
                       </div>
                       {formError && <div style={{ color: '#FF6B6B', fontSize: 12, marginTop: 8 }}>{formError}</div>}
                     </div>
@@ -3757,6 +3734,54 @@
             );
           };
 
+
+          // ========================================
+          // TAB BAR GLOBAL (visible en lista, dashboard, asistente)
+          // ========================================
+          const TabBar = () => {
+            const tabs = [
+              { id: 'lista',        label: 'Inicio',     icon: '🏠' },
+              { id: 'horarios',     label: 'Horarios',   icon: '📅' },
+              { id: 'vencimientos', label: 'Vencim.',    icon: '📦' },
+              { id: 'asistente',    label: 'Asistente',  icon: '🤖' },
+              { id: 'dashboard',    label: 'Dashboard',  icon: '📊' },
+            ];
+            const tabs_lider = [
+              { id: 'horarios',     label: 'Horarios',   icon: '📅' },
+            ];
+            const tabs_enc = [
+              { id: 'vencimientos', label: 'Vencim.',    icon: '📦' },
+            ];
+            const tabsVisibles = esLider ? tabs_lider : esEncargadoVencimientos ? tabs_enc : tabs;
+            const tabsActivos = ['lista','horarios','vencimientos','asistente','dashboard'];
+            if (!tabsActivos.includes(vista)) return null;
+
+            return (
+              <div style={{
+                position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100,
+                background: '#1A1A1A', borderTop: '1px solid #2A2A2A',
+                display: 'flex', justifyContent: 'space-around', alignItems: 'center',
+                padding: '8px 0 12px',
+                boxShadow: '0 -4px 20px rgba(0,0,0,0.4)'
+              }}>
+                {tabsVisibles.map(tab => {
+                  const activo = vista === tab.id;
+                  return (
+                    <button key={tab.id} onClick={() => setVista(tab.id)} style={{
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                      background: 'none', border: 'none', cursor: 'pointer', padding: '4px 12px',
+                      minWidth: 60, flex: 1
+                    }}>
+                      <span style={{ fontSize: 22 }}>{tab.icon}</span>
+                      <span style={{ fontSize: 10, fontWeight: activo ? 700 : 400, color: activo ? '#4ECDC4' : '#666', letterSpacing: '0.2px' }}>{tab.label}</span>
+                      {activo && <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#4ECDC4', marginTop: 1 }} />}
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          };
+
           return (
             <div>
               {vista === 'login' && <VistaLogin />}
@@ -3767,6 +3792,7 @@
               {vista === 'horarios' && <VistaHorarios />}
               {vista === 'asistente' && <VistaAsistente />}
               {vista === 'vencimientos' && <VistaVencimientos />}
+              <TabBar />
             </div>
           );
         }
