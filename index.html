@@ -244,44 +244,24 @@
           { nombre: 'Mparodi', email: 'mparodi@ferniplast.com', password: '_Ferni159' }
         ];
 
-        // Gerentes de tienda: usuario predeterminado por sucursal
-        const GERENTES = {
-          'gerenteferni1': 'F1',
-          'gerenteferni2': 'F2',
-          'gerenteferni3': 'F3',
-          'gerenteferni4': 'F4',
-          'gerenteferni5': 'F5',
-          'gerenteferni6': 'F6',
-          'gerenteferni7': 'F7',
-          'gerenteferni8': 'F8',
-          'gerenteferni9': 'F9'
-        };
-        
-        const SUCURSALES = [
-          { id: 'F1', nombre: 'FERNI 1' },
-          { id: 'F2', nombre: 'FERNI 2' },
-          { id: 'F3', nombre: 'FERNI 3' },
-          { id: 'F4', nombre: 'FERNI 4' },
-          { id: 'F5', nombre: 'FERNI 5' },
-          { id: 'F6', nombre: 'FERNI 6' },
-          { id: 'F7', nombre: 'FERNI 7' },
-          { id: 'F8', nombre: 'FERNI 8' },
-          { id: 'F9', nombre: 'FERNI 9' }
-        ];
+        // App exclusiva FERNI 3
+        const SUCURSAL_ID = 'F3';
+        const SUCURSAL_NOMBRE = 'FERNI 3';
+        const GERENTES = { 'gerenteferni3': 'F3' };
+        // Array para compatibilidad con SUCURSALES.find() existente
+        const SUCURSALES = [{ id: 'F3', nombre: 'FERNI 3' }];
 
         const CATEGORIAS = [
-          { id: 'visual', nombre: 'Exhibiciones', color: '#000000', icon: '🎯' },
-          { id: 'limpieza', nombre: 'Limpieza y Orden', color: '#000000', icon: '🧹' },
-          { id: 'mantenimiento', nombre: 'Mantenimiento', color: '#000000', icon: '🔧' },
-          { id: 'inventario', nombre: 'Inventario', color: '#000000', icon: '📦' },
-          { id: 'ambiental', nombre: 'Mejoras Ambientales', color: '#000000', icon: '♻️' }
+          { id: 'visual', nombre: 'Exhibiciones', color: '#4ECDC4', icon: '🎯' },
+          { id: 'limpieza', nombre: 'Limpieza y Orden', color: '#F0EDE8', icon: '🧹' },
+          { id: 'mantenimiento', nombre: 'Mantenimiento', color: '#FFB84D', icon: '🔧' },
+          { id: 'inventario', nombre: 'Inventario', color: '#FF6B35', icon: '📦' },
+          { id: 'ambiental', nombre: 'Mejoras Ambientales', color: '#4DFF91', icon: '♻️' }
         ];
 
-        // ========================================
-        // CONSTANTES MÓDULO HORARIOS
-        // ========================================
-        // Sucursales con módulo de horarios habilitado (piloto)
+        // Módulos activos en F3
         const SUCURSALES_CON_HORARIOS = ['F3'];
+        const SUCURSALES_CON_VENCIMIENTOS = ['F3'];
 
         // ========================================
         // CONSTANTES MÓDULO ASISTENTE
@@ -297,10 +277,14 @@
 
         // Áreas por defecto que se crean al activar el módulo en una sucursal
         const AREAS_DEFAULT = [
-          { id: 'cajas', nombre: 'Línea de Cajas', color: '#1D9E75', roles: ['24hs', '48hs', 'Colíder cajas', 'Líder cajas'] },
-          { id: 'atencion', nombre: 'Atención Cliente', color: '#E24B4A', subcategorias: ['Atención', 'Abastecimiento', 'Personalizada'], roles: ['Atenc. Cliente', 'Líder atención'] },
-          { id: 'vigilancia', nombre: 'Vigilancia', color: '#888780', roles: ['Vigilancia', 'Líder vigilancia'] },
-          { id: 'liderazgo', nombre: 'Liderazgo', color: '#AFA9EC', roles: ['Líder', 'Co líder'] },
+          { id: 'perfumeria',       nombre: 'Perfumería',        color: '#E24B4A', roles: ['Líder Perfumería'] },
+          { id: 'cajas',            nombre: 'Cajas',             color: '#1D9E75', roles: ['Líder Cajas', 'Co Líder Cajas'] },
+          { id: 'golosinas',        nombre: 'Golosinas',         color: '#FAC775', roles: ['Líder Golosinas'] },
+          { id: 'deposito',         nombre: 'Depósito',          color: '#378ADD', roles: ['Líder Depósito'] },
+          { id: 'textil',           nombre: 'Textil',            color: '#8B5CF6', roles: ['Líder Textil'] },
+          { id: 'vigilancia',       nombre: 'Vigilancia',        color: '#888780', roles: ['Líder Vigilancia'] },
+          { id: 'colider',          nombre: 'Colíder',           color: '#FF6B35', roles: ['Colíder'] },
+          { id: 'control_gestion',  nombre: 'Control de Gestión',color: '#AFA9EC', roles: ['Control de Gestión'] },
         ];
 
         const TURNOS_TIPICOS = [
@@ -509,7 +493,7 @@
 
           const [vista, setVista] = useState(
             sesionGuardada
-              ? (sesionGuardada.esLider ? 'horarios' : 'lista')
+              ? (sesionGuardada.esLider ? 'horarios' : sesionGuardada.esEncargadoVencimientos ? 'vencimientos' : 'lista')
               : 'login'
           );
           const [usuario, setUsuario] = useState(sesionGuardada?.usuario || null);
@@ -520,6 +504,7 @@
           const [esGerente, setEsGerente] = useState(sesionGuardada?.esGerente || false);
           const [esLider, setEsLider] = useState(sesionGuardada?.esLider || false);
           const [areaLider, setAreaLider] = useState(sesionGuardada?.areaLider || null);
+          const [esEncargadoVencimientos, setEsEncargadoVencimientos] = useState(sesionGuardada?.esEncargadoVencimientos || false);
           const [reportes, setReportes] = useState([]);
           const [reportesNuevos, setReportesNuevos] = useState([]);
           const [contadorNuevos, setContadorNuevos] = useState(0);
@@ -576,9 +561,7 @@
             const timestampUltimaVisita = ultimaVisita ? new Date(ultimaVisita) : new Date(0);
 
             let query = db.collection('reportes');
-            if (sucursalActiva !== 'TODAS') {
-              query = query.where('sucursal', '==', sucursalActiva);
-            }
+            query = query.where('sucursal', '==', SUCURSAL_ID);
 
             let primeraVez = true;
 
@@ -632,51 +615,39 @@
             const [nombreLider, setNombreLider] = useState('');
 
             const handleLoginEmpleado = () => {
-              if (!nombre.trim() || !email.trim() || !sucursal) { alert('Completá nombre, email y sucursal'); return; }
+              if (!nombre.trim() || !email.trim()) { alert('Completá nombre y email'); return; }
               const emailLower = email.trim().toLowerCase();
-              const gerenteSucursal = GERENTES[emailLower];
-              
-              if (gerenteSucursal) {
-                // Es un gerente de tienda
-                if (gerenteSucursal !== sucursal) {
-                  alert(`⚠️ El usuario ${emailLower} corresponde a ${SUCURSALES.find(s => s.id === gerenteSucursal)?.nombre}. Seleccioná la sucursal correcta.`);
-                  return;
-                }
-                const sesion = { usuario: nombre.trim(), usuarioEmail: emailLower, sucursalUsuario: sucursal, sucursalActiva: sucursal, esAdmin: false, esGerente: true };
-                guardarSesion(sesion);
-                setUsuario(sesion.usuario);
-                setUsuarioEmail(sesion.usuarioEmail);
-                setSucursalUsuario(sesion.sucursalUsuario);
-                setSucursalActiva(sesion.sucursalActiva);
-                setEsAdmin(false);
-                setEsGerente(true);
-                setVista('lista');
-              } else {
-                // Empleado común
-                const sesion = { usuario: nombre.trim(), usuarioEmail: emailLower, sucursalUsuario: sucursal, sucursalActiva: sucursal, esAdmin: false, esGerente: false };
-                guardarSesion(sesion);
-                setUsuario(sesion.usuario);
-                setUsuarioEmail(sesion.usuarioEmail);
-                setSucursalUsuario(sesion.sucursalUsuario);
-                setSucursalActiva(sesion.sucursalActiva);
-                setEsAdmin(false);
-                setEsGerente(false);
-                setVista('lista');
-              }
+              const esGte = !!GERENTES[emailLower];
+              const sesion = {
+                usuario: nombre.trim(),
+                usuarioEmail: emailLower,
+                sucursalUsuario: SUCURSAL_ID,
+                sucursalActiva: SUCURSAL_ID,
+                esAdmin: esGte,
+                esGerente: esGte
+              };
+              guardarSesion(sesion);
+              setUsuario(sesion.usuario);
+              setUsuarioEmail(sesion.usuarioEmail);
+              setSucursalUsuario(SUCURSAL_ID);
+              setSucursalActiva(SUCURSAL_ID);
+              setEsAdmin(esGte);
+              setEsGerente(esGte);
+              setVista('lista');
             };
 
             const handleLoginAdmin = () => {
               if (!email.trim() || !password.trim()) { alert('Completá email y contraseña'); return; }
               const admin = ADMINS.find(a => a.email === email && a.password === password);
               if (!admin) { alert('❌ Email o contraseña incorrectos'); return; }
-              const sesion = { usuario: admin.nombre, usuarioEmail: email.trim().toLowerCase(), sucursalUsuario: 'TODAS', sucursalActiva: 'TODAS', esAdmin: true, esGerente: false };
+              const sesion = { usuario: admin.nombre, usuarioEmail: email.trim().toLowerCase(), sucursalUsuario: SUCURSAL_ID, sucursalActiva: SUCURSAL_ID, esAdmin: true, esGerente: true };
               guardarSesion(sesion);
               setUsuario(sesion.usuario);
               setUsuarioEmail(sesion.usuarioEmail);
-              setSucursalUsuario('TODAS');
-              setSucursalActiva('TODAS');
+              setSucursalUsuario(SUCURSAL_ID);
+              setSucursalActiva(SUCURSAL_ID);
               setEsAdmin(true);
-              setEsGerente(false);
+              setEsGerente(true);
               setVista('lista');
             };
 
@@ -735,18 +706,64 @@
             };
 
 
+            const [codigoVto, setCodigoVto] = useState('');
+            const [nombreVto, setNombreVto] = useState('');
+            const [errorVto, setErrorVto] = useState('');
+            const [cargandoVtoLogin, setCargandoVtoLogin] = useState(false);
+
+            const handleLoginEncargadoVto = async () => {
+              setErrorVto('');
+              if (!nombreVto.trim() || !codigoVto.trim()) { setErrorVto('Completá tu nombre y el código'); return; }
+              setCargandoVtoLogin(true);
+              try {
+                const codigo = codigoVto.toUpperCase().trim();
+                const doc = await db.collection('vencimientos_invitaciones').doc(codigo).get();
+                if (!doc.exists) { setErrorVto('Código incorrecto. Consultá con el administrador.'); return; }
+                const inv = doc.data();
+                if (inv.revocado) { setErrorVto('Este código fue revocado. Pedí uno nuevo.'); return; }
+                const expiraEn = getFecha(inv.expiraEn);
+                if (expiraEn && Date.now() > expiraEn.getTime()) { setErrorVto('Este código expiró. Pedí uno nuevo.'); return; }
+                // Registrar uso sin bloquear (permite múltiples encargados)
+                await db.collection('vencimientos_invitaciones').doc(codigo).update({
+                  usos: firebase.firestore.FieldValue.arrayUnion({ nombre: nombreVto.trim(), fecha: new Date().toISOString() })
+                });
+                const sesion = {
+                  usuario: nombreVto.trim(),
+                  usuarioEmail: `encargado_vto_${inv.sucursal}`.toLowerCase(),
+                  sucursalUsuario: inv.sucursal,
+                  sucursalActiva: inv.sucursal,
+                  esAdmin: false, esGerente: false, esLider: false,
+                  esEncargadoVencimientos: true
+                };
+                guardarSesion(sesion);
+                setUsuario(sesion.usuario);
+                setUsuarioEmail(sesion.usuarioEmail);
+                setSucursalUsuario(sesion.sucursalUsuario);
+                setSucursalActiva(sesion.sucursalActiva);
+                setEsAdmin(false); setEsGerente(false); setEsLider(false);
+                setEsEncargadoVencimientos(true);
+                setVista('vencimientos');
+              } catch(err) {
+                setErrorVto('Error al validar el código. Revisá tu conexión.');
+                console.error(err);
+              } finally {
+                setCargandoVtoLogin(false);
+              }
+            };
+
             return (
               <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
                 <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
                   <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold text-gray-800 mb-2">FERNI</h1>
+                    <h1 className="text-3xl font-bold text-gray-800 mb-2">FERNI 3</h1>
                     <p className="text-gray-600">Sistema de Incidencias</p>
                   </div>
                   
-                  <div className="flex gap-2 mb-6">
+                  <div className="flex gap-2 mb-6 flex-wrap">
                     <button onClick={() => setTipoLogin('empleado')} className={`flex-1 py-3 rounded-lg font-semibold transition text-sm ${tipoLogin === 'empleado' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>Usuario</button>
                     <button onClick={() => setTipoLogin('admin')} className={`flex-1 py-3 rounded-lg font-semibold transition text-sm ${tipoLogin === 'admin' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>Admin</button>
-                    <button onClick={() => setTipoLogin('codigo')} className={`flex-1 py-3 rounded-lg font-semibold transition text-sm ${tipoLogin === 'codigo' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>🎟️ Código</button>
+                    <button onClick={() => setTipoLogin('codigo')} className={`flex-1 py-3 rounded-lg font-semibold transition text-sm ${tipoLogin === 'codigo' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>Código</button>
+                    <button onClick={() => setTipoLogin('vencimientos')} className={`flex-1 py-3 rounded-lg font-semibold transition text-sm ${tipoLogin === 'vencimientos' ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>Vencimientos</button>
                   </div>
 
                   {tipoLogin === 'empleado' && (
@@ -757,14 +774,7 @@
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Tu email</label>
-                        <input type="email" placeholder="tu.email@ejemplo.com" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none" />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Tu sucursal</label>
-                        <select value={sucursal} onChange={(e) => setSucursal(e.target.value)} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none bg-white">
-                          <option value="">Seleccioná tu tienda</option>
-                          {SUCURSALES.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
-                        </select>
+                        <input type="email" placeholder="tu.email@ejemplo.com" value={email} onChange={(e) => setEmail(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleLoginEmpleado()} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none" />
                       </div>
                       <button onClick={handleLoginEmpleado} className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition">Ingresar</button>
                     </div>
@@ -817,17 +827,37 @@
                       <button onClick={handleCrearCuentaLider} className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition">Entrar al módulo</button>
                     </div>
                   )}
+                  {tipoLogin === 'vencimientos' && (
+                    <div className="space-y-4">
+                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-sm text-orange-800">
+                        Ingreso exclusivo para el encargado de control de vencimientos. El código lo provee el administrador.
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Tu nombre</label>
+                        <input type="text" placeholder="Nombre y Apellido" value={nombreVto}
+                          onChange={(e) => setNombreVto(e.target.value)}
+                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-orange-400 focus:outline-none" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Código de encargado</label>
+                        <input type="text" placeholder="VTO-F3-XXXX" value={codigoVto}
+                          onChange={(e) => setCodigoVto(e.target.value.toUpperCase())}
+                          onKeyPress={(e) => e.key === 'Enter' && handleLoginEncargadoVto()}
+                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-orange-400 focus:outline-none text-center text-lg font-mono tracking-widest font-bold" />
+                      </div>
+                      {errorVto && <div className="text-red-600 text-sm text-center">{errorVto}</div>}
+                      <button onClick={handleLoginEncargadoVto} disabled={cargandoVtoLogin} className="w-full bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition disabled:opacity-60">
+                        {cargandoVtoLogin ? 'Validando...' : 'Ingresar como Encargado'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             );
           };
-
-          // ========================================
-          // LISTA DE REPORTES
-          // ========================================
           const VistaLista = () => {
             const reportesFiltrados = reportes.filter(r => filtroEstado === 'todos' || r.estado === filtroEstado);
-            const sucursalNombre = sucursalActiva === 'TODAS' ? 'Todas las Sucursales' : SUCURSALES.find(s => s.id === sucursalActiva)?.nombre || sucursalActiva;
+            const sucursalNombre = SUCURSAL_NOMBRE;
 
             const tiempoTranscurrido = (campo) => {
               const fecha = getFecha(campo);
@@ -867,28 +897,17 @@
                           </span>
                         )}
                       </div>
-                      <p className="text-blue-100 text-sm">Hola, {usuario} {esAdmin && '👑'} {esGerente && '🏪 Gerente'}</p>
-                      
-                      {esAdmin ? (
-                        <div className="mt-3">
-                          <select value={sucursalActiva} onChange={(e) => setSucursalActiva(e.target.value)} className="px-3 py-2 rounded-lg bg-white/20 text-white border border-white/30 text-sm font-medium focus:outline-none focus:bg-white/30">
-                            <option value="TODAS" style={{color:'#000'}}>📊 Todas las sucursales</option>
-                            {SUCURSALES.map(s => <option key={s.id} value={s.id} style={{color:'#000'}}>{s.nombre}</option>)}
-                          </select>
-                        </div>
-                      ) : (
-                        <div className="mt-2 text-blue-100 text-sm">📍 {sucursalNombre}</div>
-                      )}
+                      <p className="text-blue-100 text-sm">Hola, {usuario} {esAdmin && '👑'}</p>
+                      <div className="mt-1 text-blue-100 text-sm">📍 FERNI 3</div>
                     </div>
-                    <div className="flex gap-2">
-                      {SUCURSALES_CON_HORARIOS.includes(sucursalActiva) && (
-                        <button onClick={() => setVista('horarios')} className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition text-sm">📅 Horarios</button>
-                      )}
+                    <div className="flex gap-2 flex-wrap justify-end">
+                      <button onClick={() => setVista('horarios')} className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition text-sm">📅 Horarios</button>
+                      <button onClick={() => setVista('vencimientos')} className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition text-sm">📦 Vencimientos</button>
                       <button onClick={() => setVista('dashboard')} className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition text-sm">📊 Dashboard</button>
                     </div>
                   </div>
                   <div className="flex justify-end mt-2">
-                    <button onClick={() => { borrarSesion(); setUsuario(null); setUsuarioEmail(null); setSucursalUsuario(null); setSucursalActiva(null); setEsAdmin(false); setEsGerente(false); setEsLider(false); setAreaLider(null); setReportes([]); setVista('login'); }} className="text-xs text-blue-200 hover:text-white underline opacity-70 hover:opacity-100 transition">Cerrar sesión</button>
+                    <button onClick={() => { borrarSesion(); setUsuario(null); setUsuarioEmail(null); setSucursalUsuario(null); setSucursalActiva(null); setEsAdmin(false); setEsGerente(false); setEsLider(false); setAreaLider(null); setEsEncargadoVencimientos(false); setReportes([]); setVista('login'); }} className="text-xs text-blue-200 hover:text-white underline opacity-70 hover:opacity-100 transition">Cerrar sesión</button>
                   </div>
                   
                   <div className="grid grid-cols-3 gap-3">
@@ -953,10 +972,10 @@
                               {esNuevo && <span className="text-green-500 text-xl">✨</span>}
                               <span className="text-2xl">{categoria?.icon}</span>
                               <div className="flex-1">
-                                <div className="font-semibold text-gray-800">{categoria?.nombre}</div>
-                                <div className="text-sm text-gray-500">
+                                <div className="font-semibold" style={{ color: '#F0EDE8' }}>{categoria?.nombre}</div>
+                                <div className="text-sm" style={{ color: '#888888' }}>
                                   Por {reporte.usuario_reporta}
-                                  {sucursalActiva === 'TODAS' && sucursal && <span className="ml-2 text-blue-600">• {sucursal.nombre}</span>}
+
                                 </div>
                               </div>
                             </div>
@@ -964,9 +983,9 @@
                               {reporte.estado === 'abierto' ? '🔴 Abierto' : '✅ Resuelto'}
                             </span>
                           </div>
-                          <p className="text-gray-600 text-sm mb-2 line-clamp-2">{reporte.descripcion}</p>
+                          <p className="text-sm mb-2 line-clamp-2" style={{ color: '#AAAAAA' }}>{reporte.descripcion}</p>
                           <div className="flex justify-between items-center">
-                            <div className="text-xs text-gray-400">{formatFecha(reporte.fecha_creacion)}</div>
+                            <div className="text-xs" style={{ color: '#666660' }}>{formatFecha(reporte.fecha_creacion)}</div>
                             {tiempo && <div className={`text-xs ${tiempo.color}`}>⏱ {tiempo.texto}</div>}
                           </div>
                         </div>
@@ -1029,7 +1048,7 @@
                   fecha_creacion: new Date(),
                   fecha_resolucion: null,
                   analisis_ia: null,
-                  sucursal: esAdmin && sucursalActiva !== 'TODAS' ? sucursalActiva : sucursalUsuario,
+                  sucursal: SUCURSAL_ID,
                   comentarios: []
                 });
 
@@ -1043,25 +1062,30 @@
               }
             };
 
-            const sucursalCrear = esAdmin && sucursalActiva !== 'TODAS' ? sucursalActiva : sucursalUsuario;
+            const sucursalCrear = SUCURSAL_ID;
 
             return (
               <div className="min-h-screen bg-gray-50">
                 <div className="bg-blue-600 text-white p-6">
                   <button onClick={() => setVista('lista')} className="mb-4 text-blue-100 hover:text-white">← Volver</button>
                   <h1 className="text-2xl font-bold">Nuevo Reporte</h1>
-                  <p className="text-blue-100 text-sm mt-1">{SUCURSALES.find(s => s.id === sucursalCrear)?.nombre}</p>
+                  <p className="text-blue-100 text-sm mt-1">FERNI 3</p>
                 </div>
 
                 <div className="p-6 space-y-6">
                   <div>
-                    <label className="block text-gray-700 font-semibold mb-3">Categoría</label>
+                    <label className="block font-semibold mb-3" style={{ color: '#F0EDE8' }}>Categoría</label>
                     <div className="grid grid-cols-1 gap-3">
                       {CATEGORIAS.map(cat => (
-                        <button key={cat.id} onClick={() => setCategoria(cat.id)} className={`p-4 rounded-lg border-2 transition text-left ${categoria === cat.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'}`}>
+                        <button key={cat.id} onClick={() => setCategoria(cat.id)}
+                          className={`p-4 rounded-lg border-2 transition text-left`}
+                          style={{
+                            background: categoria === cat.id ? '#2A2A2A' : '#1A1A1A',
+                            borderColor: categoria === cat.id ? '#4ECDC4' : '#3A3A3A'
+                          }}>
                           <div className="flex items-center gap-3">
                             <span className="text-2xl">{cat.icon}</span>
-                            <span className="font-medium" style={{ color: cat.color }}>{cat.nombre}</span>
+                            <span className="font-medium" style={{ color: '#F0EDE8' }}>{cat.nombre}</span>
                           </div>
                         </button>
                       ))}
@@ -1069,12 +1093,12 @@
                   </div>
 
                   <div>
-                    <label className="block text-gray-700 font-semibold mb-2">Descripción</label>
+                    <label className="block font-semibold mb-2" style={{ color: '#F0EDE8' }}>Descripción</label>
                     <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} placeholder="Describí el problema..." className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none" rows="4" />
                   </div>
 
                   <div>
-                    <label className="block text-gray-700 font-semibold mb-2">Foto del problema</label>
+                    <label className="block font-semibold mb-2" style={{ color: '#F0EDE8' }}>Foto del problema</label>
                     <input type="file" accept="image/*" onChange={handleFotoChange} className="hidden" id="foto-input" />
                     <label htmlFor="foto-input" className="block w-full p-6 border-2 border-dashed border-gray-300 rounded-lg text-center cursor-pointer hover:border-blue-500 transition">
                       {previsualizacion ? (
@@ -1082,7 +1106,7 @@
                       ) : (
                         <>
                           <div className="text-4xl mb-2">📷</div>
-                          <div className="text-gray-600">Tocar para tomar foto</div>
+                          <div style={{ color: '#AAAAAA' }}>Tocar para tomar foto</div>
                         </>
                       )}
                     </label>
@@ -1154,7 +1178,7 @@
             };
 
             const handleEliminar = async () => {
-              if (!esAdmin && !esGerente) { alert('Solo administradores y gerentes pueden eliminar reportes'); return; }
+              if (!esAdmin) { alert('Solo administradores pueden eliminar reportes'); return; }
               if (!confirm('¿Estás seguro de eliminar este reporte?')) return;
               try {
                 // Borrar fotos de Storage si son URLs
@@ -1224,7 +1248,7 @@
                       onClick={() => {
                         const link = `${window.location.origin}${window.location.pathname}#reporte-${reporteActual.id}`;
                         const estado = reporteActual.estado === 'abierto' ? '🔴 ABIERTO' : '✅ RESUELTO';
-                        const sucursalNombre = SUCURSALES.find(s => s.id === reporteActual.sucursal)?.nombre || reporteActual.sucursal;
+                        const sucursalNombre = SUCURSAL_NOMBRE;
                         const catNombre = CATEGORIAS.find(c => c.id === reporteActual.categoria);
                         const texto = `${estado} — ${catNombre?.icon || ''} ${catNombre?.nombre || reporteActual.categoria}\n📍 ${sucursalNombre}\n👤 Reportado por: ${reporteActual.usuario_reporta}\n📝 ${reporteActual.descripcion}\n🕐 ${formatFecha(reporteActual.fecha_creacion)}\n\n🔗 Ver reporte: ${link}`;
                         window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
@@ -1409,7 +1433,7 @@
               tasaResolucion: reportesFiltrados.length > 0 ? Math.round((reportesFiltrados.filter(r => r.estado === 'resuelto').length / reportesFiltrados.length) * 100) : 0
             };
 
-            const statsPorSucursal = esAdmin && sucursalActiva === 'TODAS'
+            const statsPorSucursal = false && esAdmin && sucursalActiva === 'TODAS'
               ? SUCURSALES.map(suc => {
                   const rep = reportesFiltrados.filter(r => r.sucursal === suc.id);
                   const res = rep.filter(r => r.estado === 'resuelto').length;
@@ -1481,14 +1505,14 @@
                     </button>
                   </div>
                   <h1 className="text-2xl font-bold mb-2">📊 Dashboard</h1>
-                  <p className="text-blue-100">{sucursalActiva === 'TODAS' ? 'Todas las Sucursales' : SUCURSALES.find(s => s.id === sucursalActiva)?.nombre}</p>
+                  <p className="text-blue-100">FERNI 3</p>
                 </div>
 
                 {/* Header para impresión */}
                 <div className="print-only hidden">
                   <div className="text-center mb-6 pb-4 border-b-2 border-gray-300">
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">FERNI - Dashboard de Incidencias</h1>
-                    <p className="text-lg text-gray-600">{sucursalActiva === 'TODAS' ? 'Todas las Sucursales' : SUCURSALES.find(s => s.id === sucursalActiva)?.nombre}</p>
+                    <p className="text-lg text-gray-600">FERNI 3</p>
                     <p className="text-sm text-gray-500 mt-2">Período: {getTextoPeriodo()}</p>
                     <p className="text-sm text-gray-500">Generado el {new Date().toLocaleDateString('es-AR', { day:'2-digit', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' })}</p>
                   </div>
@@ -1755,7 +1779,7 @@
                       const tendencia = tasaSegunda > tasaPrimera + 0.05 ? 'mejorando' : tasaSegunda < tasaPrimera - 0.05 ? 'empeorando' : 'estable';
 
                       let sucCritica = null;
-                      if (esAdmin && sucursalActiva === 'TODAS') {
+                      if (false) { // multi-sucursal desactivado
                         const sucStats = SUCURSALES.map(suc => {
                           const rep = reportesFiltrados.filter(r => r.sucursal === suc.id);
                           const ab = rep.filter(r => r.estado === 'abierto').length;
@@ -2111,9 +2135,10 @@
                     if (doc.exists) {
                       const data = doc.data();
                       // Detectar si la config necesita migración a la nueva estructura
-                      const tieneAreasViejas = data.areas && data.areas.some(a => a.id === 'salon' || a.id === 'belleza');
-                      const atencionSinSubcat = data.areas && data.areas.find(a => a.id === 'atencion' && !a.subcategorias);
-                      if ((tieneAreasViejas || atencionSinSubcat) && (esGerente || esAdmin)) {
+                      const idsViejos = ['salon', 'belleza', 'atencion', 'liderazgo'];
+                      const tieneAreasViejas = data.areas && data.areas.some(a => idsViejos.includes(a.id));
+                      const cajasConRolesViejos = data.areas && data.areas.find(a => a.id === 'cajas' && a.roles && a.roles.includes('24hs'));
+                      if ((tieneAreasViejas || cajasConRolesViejos) && (esGerente || esAdmin)) {
                         console.log('[Horarios] Migrando estructura de áreas a nueva versión...');
                         try {
                           await db.collection('sucursales_config').doc(sucursalActiva).update({ areas: AREAS_DEFAULT });
@@ -2229,7 +2254,7 @@
               };
             }, [sucursalActiva, horarioId]);
 
-            const sucursalNombre = SUCURSALES.find(s => s.id === sucursalActiva)?.nombre || sucursalActiva;
+            const sucursalNombre = SUCURSAL_NOMBRE;
             const volverAIncidencias = () => setVista('lista');
 
             // Cargando
@@ -3267,6 +3292,471 @@
             );
           };
 
+          // ========================================
+          // MÓDULO VENCIMIENTOS
+          // ========================================
+          const VistaVencimientos = () => {
+            const puedeEditar = esAdmin || esEncargadoVencimientos;
+            const sucursalVto = SUCURSAL_ID;
+
+            const [items, setItems] = useState([]);
+            const [cargandoVto, setCargandoVto] = useState(true);
+            const [umbrales, setUmbrales] = useState({ critico: 7, alerta: 20 });
+            const [umbralesEdit, setUmbralesEdit] = useState({ critico: 7, alerta: 20 });
+            const [mostrandoUmbrales, setMostrandoUmbrales] = useState(false);
+            const [errorUmbrales, setErrorUmbrales] = useState('');
+
+            // Invitaciones (solo admin)
+            const [invitaciones, setInvitaciones] = useState([]);
+            const [mostrandoInvitaciones, setMostrandoInvitaciones] = useState(false);
+            const [codigoGeneradoVto, setCodigoGeneradoVto] = useState(null);
+
+            const [formEan, setFormEan] = useState('');
+            const [formDesc, setFormDesc] = useState('');
+            const [formVto, setFormVto] = useState('');
+            const [formQty, setFormQty] = useState('');
+            const [formRemito, setFormRemito] = useState('');
+            const [formError, setFormError] = useState('');
+
+            const [buscar, setBuscar] = useState('');
+            const [filtroEst, setFiltroEst] = useState('');
+            const [editId, setEditId] = useState(null);
+            const [editVto, setEditVto] = useState('');
+            const [editQty, setEditQty] = useState('');
+            const [editRemito, setEditRemito] = useState('');
+            const [deleteId, setDeleteId] = useState(null);
+
+            const colRef = db.collection('vencimientos').doc(sucursalVto).collection('items');
+            const configRef = db.collection('vencimientos').doc(sucursalVto);
+
+            // Cargar items en tiempo real
+            useEffect(() => {
+              const unsub = colRef.onSnapshot(snap => {
+                setItems(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+                setCargandoVto(false);
+              });
+              return () => unsub();
+            }, [sucursalVto]);
+
+            // Cargar config de umbrales
+            useEffect(() => {
+              configRef.get().then(doc => {
+                if (doc.exists && doc.data().umbrales) {
+                  const u = doc.data().umbrales;
+                  setUmbrales(u);
+                  setUmbralesEdit(u);
+                }
+              });
+            }, [sucursalVto]);
+
+            // Cargar invitaciones en tiempo real (solo admin)
+            useEffect(() => {
+              if (!esAdmin) return;
+              const unsub = db.collection('vencimientos_invitaciones')
+                .where('sucursal', '==', sucursalVto)
+                .onSnapshot(snap => {
+                  setInvitaciones(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+                });
+              return () => unsub();
+            }, [sucursalVto, esAdmin]);
+
+            const generarInvitacionVto = async () => {
+              const sufijo = Math.random().toString(36).substring(2, 7).toUpperCase();
+              const codigo = `VTO-${sucursalVto}-${sufijo}`;
+              const nueva = {
+                codigo,
+                sucursal: sucursalVto,
+                creadaPor: usuario,
+                creadaEn: firebase.firestore.FieldValue.serverTimestamp(),
+                expiraEn: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 días
+                revocado: false,
+                usos: []
+              };
+              try {
+                await db.collection('vencimientos_invitaciones').doc(codigo).set(nueva);
+                setCodigoGeneradoVto(nueva);
+              } catch(err) { alert('Error: ' + err.message); }
+            };
+
+            const revocarInvitacionVto = async (codigo) => {
+              if (!confirm('¿Revocar este código? Los encargados que lo usaron perderán acceso al reiniciar sesión.')) return;
+              try {
+                await db.collection('vencimientos_invitaciones').doc(codigo).update({ revocado: true });
+              } catch(err) { alert('Error: ' + err.message); }
+            };
+
+            const compartirWhatsAppVto = (inv) => {
+              const mensaje = encodeURIComponent(
+                `Hola! Te invito a ser encargado/a de Control de Vencimientos en FERNI ${inv.sucursal}.\n\n` +
+                `Tu código de acceso es: *${inv.codigo}*\n\n` +
+                `Entrá a la app FERNI, elegí "Vencimientos" en el login y usá ese código. Vence en 30 días.`
+              );
+              window.open(`https://wa.me/?text=${mensaje}`, '_blank');
+            };
+
+            const diasHasta = (vto) => Math.ceil((new Date(vto) - new Date()) / 86400000);
+            const getEstado = (vto) => {
+              const d = diasHasta(vto);
+              if (d < 0) return 'vencido';
+              if (d <= umbrales.critico) return 'critico';
+              if (d <= umbrales.alerta) return 'alerta';
+              return 'normal';
+            };
+            const fmtF = (s) => { const [y,m,d] = s.split('-'); return `${d}/${m}/${y}`; };
+
+            const aplicarUmbrales = async () => {
+              setErrorUmbrales('');
+              const c = parseInt(umbralesEdit.critico);
+              const a = parseInt(umbralesEdit.alerta);
+              if (isNaN(c) || isNaN(a) || c < 1 || a < 1) { setErrorUmbrales('Valores inválidos'); return; }
+              if (c >= a) { setErrorUmbrales('Critico debe ser menor que Alerta'); return; }
+              await configRef.set({ umbrales: { critico: c, alerta: a } }, { merge: true });
+              setUmbrales({ critico: c, alerta: a });
+              setMostrandoUmbrales(false);
+            };
+
+            const agregarItem = async () => {
+              setFormError('');
+              if (!formEan.trim() || !formDesc.trim() || !formVto) { setFormError('EAN/SKU, descripcion y vencimiento son obligatorios.'); return; }
+              await colRef.add({
+                ean: formEan.trim(),
+                desc: formDesc.trim(),
+                vto: formVto,
+                qty: formQty ? parseInt(formQty) : null,
+                remito: formRemito.trim(),
+                creadoPor: usuario,
+                creadoEn: firebase.firestore.FieldValue.serverTimestamp()
+              });
+              setFormEan(''); setFormDesc(''); setFormVto(''); setFormQty(''); setFormRemito('');
+            };
+
+            const guardarEdicion = async (id) => {
+              if (!editVto) return;
+              await colRef.doc(id).update({
+                vto: editVto,
+                qty: editQty ? parseInt(editQty) : null,
+                remito: editRemito,
+                editadoPor: usuario,
+                editadoEn: firebase.firestore.FieldValue.serverTimestamp()
+              });
+              setEditId(null);
+            };
+
+            const confirmarEliminar = async (id) => {
+              await colRef.doc(id).delete();
+              setDeleteId(null);
+            };
+
+            const estadoStyle = {
+              vencido: { bg: 'rgba(192,57,43,0.12)', badge: '#fdecea', badgeText: '#922B21', badgeBorder: '#C0392B', diasColor: '#C0392B', label: 'Vencido' },
+              critico: { bg: 'rgba(230,126,34,0.08)', badge: '#fef3e2', badgeText: '#7D4E05', badgeBorder: '#E67E22', diasColor: '#E67E22', label: 'Critico' },
+              alerta:  { bg: 'rgba(41,128,185,0.06)', badge: '#dff0fb', badgeText: '#1A5276', badgeBorder: '#2980B9', diasColor: '#2980B9', label: 'Alerta' },
+              normal:  { bg: 'transparent',          badge: '#e0f6f5', badgeText: '#0E6655', badgeBorder: '#4ECDC4', diasColor: '#0E6655', label: 'Normal' }
+            };
+
+            const visible = items.filter(it => {
+              const m = it.ean?.toLowerCase().includes(buscar.toLowerCase()) || it.desc?.toLowerCase().includes(buscar.toLowerCase());
+              return m && (!filtroEst || getEstado(it.vto) === filtroEst);
+            }).sort((a, b) => diasHasta(a.vto) - diasHasta(b.vto));
+
+            const cnt = { vencido: 0, critico: 0, alerta: 0, normal: 0 };
+            items.forEach(it => cnt[getEstado(it.vto)]++);
+
+            const headerStyle = { background: '#1E3A5F', color: 'white', padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' };
+            const secStyle = { background: '#1A1A1A', border: '1px solid #2A2A2A', borderRadius: 10, padding: '16px 18px', marginBottom: 14 };
+            const labelStyle = { display: 'block', fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 4, fontWeight: 500 };
+            const inputStyle = { width: '100%', padding: '8px 10px', border: '1px solid #3A3A3A', borderRadius: 6, fontSize: 13, background: '#222', color: '#F0EDE8' };
+
+            return (
+              <div style={{ minHeight: '100vh', background: '#0F0F0F', fontFamily: 'Outfit, sans-serif' }}>
+                {/* Header */}
+                <div style={headerStyle}>
+                  <div>
+                    <div style={{ fontSize: 17, fontWeight: 600 }}>Control de Vencimientos</div>
+                    <div style={{ fontSize: 11, opacity: 0.6 }}>Sucursal F3 · {puedeEditar ? (esAdmin ? 'Admin' : 'Encargado') : 'Vista equipo'}</div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    {esAdmin && (
+                      <button onClick={() => { setMostrandoInvitaciones(!mostrandoInvitaciones); setMostrandoUmbrales(false); }}
+                        style={{ background: mostrandoInvitaciones ? 'rgba(255,107,53,0.4)' : 'rgba(255,255,255,0.15)', color: 'white', border: 'none', padding: '6px 14px', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>
+                        Encargados
+                      </button>
+                    )}
+                    {puedeEditar && (
+                      <button onClick={() => { setMostrandoUmbrales(!mostrandoUmbrales); setMostrandoInvitaciones(false); }}
+                        style={{ background: 'rgba(255,255,255,0.15)', color: 'white', border: 'none', padding: '6px 14px', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>
+                        ⚙ Umbrales
+                      </button>
+                    )}
+                    <button onClick={() => setVista('lista')}
+                      style={{ background: 'rgba(255,255,255,0.15)', color: 'white', border: 'none', padding: '6px 14px', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>
+                      ← Volver
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ padding: '16px 14px', maxWidth: 900, margin: '0 auto' }}>
+
+                  {/* KPIs */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: 14 }}>
+                    {[
+                      { key: 'vencido', label: 'Vencidos',     color: '#C0392B' },
+                      { key: 'critico', label: `Critico ≤${umbrales.critico}d`, color: '#E67E22' },
+                      { key: 'alerta',  label: `Alerta ≤${umbrales.alerta}d`,  color: '#2980B9' },
+                      { key: 'normal',  label: 'Normal',       color: '#4ECDC4' }
+                    ].map(k => (
+                      <div key={k.key} style={{ background: '#1A1A1A', border: `1px solid #2A2A2A`, borderLeft: `4px solid ${k.color}`, borderRadius: 8, padding: '12px 14px' }}>
+                        <div style={{ fontSize: 10, color: '#888', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>{k.label}</div>
+                        <div style={{ fontSize: 22, fontWeight: 700, color: k.color }}>{cnt[k.key]}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Panel umbrales */}
+                  {mostrandoUmbrales && puedeEditar && (
+                    <div style={secStyle}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#F0EDE8', marginBottom: 14 }}>Configurar umbrales de estado</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                        <div>
+                          <label style={labelStyle}>Critico: hasta X dias</label>
+                          <input type="number" min="1" value={umbralesEdit.critico}
+                            onChange={(e) => setUmbralesEdit(u => ({...u, critico: e.target.value}))}
+                            style={{...inputStyle, width: 90, textAlign: 'center', fontWeight: 700, color: '#E67E22'}} />
+                        </div>
+                        <div>
+                          <label style={labelStyle}>Alerta: hasta X dias</label>
+                          <input type="number" min="1" value={umbralesEdit.alerta}
+                            onChange={(e) => setUmbralesEdit(u => ({...u, alerta: e.target.value}))}
+                            style={{...inputStyle, width: 90, textAlign: 'center', fontWeight: 700, color: '#2980B9'}} />
+                        </div>
+                      </div>
+                      {errorUmbrales && <div style={{ color: '#FF6B6B', fontSize: 12, marginTop: 8 }}>{errorUmbrales}</div>}
+                      <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                        <button onClick={aplicarUmbrales} style={{ background: '#1E3A5F', color: 'white', border: 'none', padding: '8px 18px', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Guardar</button>
+                        <button onClick={() => setMostrandoUmbrales(false)} style={{ background: '#2A2A2A', color: '#aaa', border: 'none', padding: '8px 14px', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Cancelar</button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Panel invitaciones — solo admin */}
+                  {mostrandoInvitaciones && esAdmin && (
+                    <div style={secStyle}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#F0EDE8' }}>Encargados de vencimientos — {sucursalVto}</div>
+                        <button onClick={generarInvitacionVto}
+                          style={{ background: '#FF6B35', color: 'white', border: 'none', padding: '7px 16px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                          + Generar código
+                        </button>
+                      </div>
+
+                      {invitaciones.length === 0 ? (
+                        <div style={{ color: '#666', fontSize: 13, textAlign: 'center', padding: '16px 0' }}>No hay códigos generados. Generá uno para invitar a un encargado.</div>
+                      ) : (
+                        invitaciones.map(inv => {
+                          const expiraEn = getFecha(inv.expiraEn);
+                          const expirado = expiraEn && Date.now() > expiraEn.getTime();
+                          const dias = expiraEn ? Math.max(0, Math.ceil((expiraEn.getTime() - Date.now()) / 86400000)) : 0;
+                          const activo = !inv.revocado && !expirado;
+                          const usos = inv.usos || [];
+                          return (
+                            <div key={inv.codigo} style={{ background: '#222', borderRadius: 8, padding: '12px 14px', marginBottom: 8, border: `1px solid ${inv.revocado ? '#3A1A1A' : expirado ? '#2A2A2A' : '#2A3A2A'}` }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
+                                <div>
+                                  <div style={{ fontFamily: 'monospace', fontSize: 16, fontWeight: 700, letterSpacing: '0.1em', color: inv.revocado ? '#555' : expirado ? '#666' : '#4ECDC4' }}>{inv.codigo}</div>
+                                  <div style={{ fontSize: 11, color: '#666', marginTop: 3 }}>
+                                    {inv.revocado && <span style={{ color: '#FF6B6B' }}>Revocado</span>}
+                                    {!inv.revocado && expirado && <span style={{ color: '#FF6B6B' }}>Expirado</span>}
+                                    {activo && <span style={{ color: '#4DFF91' }}>Activo · vence en {dias}d</span>}
+                                    {usos.length > 0 && <span style={{ color: '#aaa', marginLeft: 8 }}>· usado por: {usos.map(u => u.nombre).join(', ')}</span>}
+                                    {usos.length === 0 && activo && <span style={{ color: '#FFB84D', marginLeft: 8 }}>· pendiente de uso</span>}
+                                  </div>
+                                </div>
+                                <div style={{ display: 'flex', gap: 6 }}>
+                                  {activo && (
+                                    <>
+                                      <button onClick={() => navigator.clipboard.writeText(inv.codigo)}
+                                        style={{ background: '#2A2A2A', color: '#aaa', border: '1px solid #3A3A3A', padding: '4px 10px', borderRadius: 5, fontSize: 11, cursor: 'pointer' }}>
+                                        Copiar
+                                      </button>
+                                      <button onClick={() => compartirWhatsAppVto(inv)}
+                                        style={{ background: '#1A3A1A', color: '#4DFF91', border: '1px solid #2A5A2A', padding: '4px 10px', borderRadius: 5, fontSize: 11, cursor: 'pointer' }}>
+                                        WhatsApp
+                                      </button>
+                                    </>
+                                  )}
+                                  {!inv.revocado && (
+                                    <button onClick={() => revocarInvitacionVto(inv.codigo)}
+                                      style={{ background: 'none', color: '#FF6B6B', border: '1px solid rgba(255,77,77,0.3)', padding: '4px 10px', borderRadius: 5, fontSize: 11, cursor: 'pointer' }}>
+                                      Revocar
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  )}
+
+                  {/* Formulario — solo encargado/admin */}
+                  {puedeEditar && (
+                    <div style={secStyle}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#F0EDE8', marginBottom: 14 }}>Registrar producto</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr 0.9fr 0.6fr 0.9fr auto', gap: 10, alignItems: 'end' }}>
+                        <div>
+                          <label style={labelStyle}>EAN / SKU *</label>
+                          <input type="text" placeholder="7790895001234" value={formEan} onChange={e => setFormEan(e.target.value)} style={inputStyle} />
+                        </div>
+                        <div>
+                          <label style={labelStyle}>Descripcion *</label>
+                          <input type="text" placeholder="Leche descremada 1L" value={formDesc} onChange={e => setFormDesc(e.target.value)} style={inputStyle} />
+                        </div>
+                        <div>
+                          <label style={labelStyle}>Vencimiento *</label>
+                          <input type="date" value={formVto} onChange={e => setFormVto(e.target.value)} style={inputStyle} />
+                        </div>
+                        <div>
+                          <label style={labelStyle}>Cantidad</label>
+                          <input type="number" min="1" placeholder="12" value={formQty} onChange={e => setFormQty(e.target.value)} style={inputStyle} />
+                        </div>
+                        <div>
+                          <label style={labelStyle}>N° Remito</label>
+                          <input type="text" placeholder="opcional" value={formRemito} onChange={e => setFormRemito(e.target.value)} style={inputStyle} />
+                        </div>
+                        <div>
+                          <button onClick={agregarItem} style={{ background: '#1E3A5F', color: 'white', border: 'none', padding: '8px 16px', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', height: 36 }}>+ Agregar</button>
+                        </div>
+                      </div>
+                      {formError && <div style={{ color: '#FF6B6B', fontSize: 12, marginTop: 8 }}>{formError}</div>}
+                    </div>
+                  )}
+
+                  {/* Tabla */}
+                  <div style={secStyle}>
+                    <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
+                      <input type="text" placeholder="Buscar por EAN, SKU o descripcion..." value={buscar}
+                        onChange={e => setBuscar(e.target.value)}
+                        style={{ ...inputStyle, flex: 1 }} />
+                      <select value={filtroEst} onChange={e => setFiltroEst(e.target.value)} style={{ ...inputStyle, width: 'auto' }}>
+                        <option value="">Todos</option>
+                        <option value="vencido">Vencido</option>
+                        <option value="critico">Critico</option>
+                        <option value="alerta">Alerta</option>
+                        <option value="normal">Normal</option>
+                      </select>
+                    </div>
+
+                    {cargandoVto ? (
+                      <div style={{ textAlign: 'center', padding: 32, color: '#666' }}>Cargando...</div>
+                    ) : visible.length === 0 ? (
+                      <div style={{ textAlign: 'center', padding: 32, color: '#666', fontSize: 13 }}>Sin productos para los filtros seleccionados.</div>
+                    ) : (
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                          <thead>
+                            <tr style={{ background: '#1E3A5F', color: 'white' }}>
+                              {['EAN / SKU','Descripcion','Cantidad','Vencimiento','Dias','Estado','Remito', puedeEditar ? 'Acciones' : ''].filter(Boolean).map(h => (
+                                <th key={h} style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 500, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.4px', whiteSpace: 'nowrap' }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {visible.map(it => {
+                              const est = getEstado(it.vto);
+                              const dias = diasHasta(it.vto);
+                              const s = estadoStyle[est];
+                              const diasLabel = dias < 0 ? `Vencido (${Math.abs(dias)}d)` : `${dias}d`;
+
+                              if (it.id === deleteId) return (
+                                <tr key={it.id} style={{ background: 'rgba(192,57,43,0.12)', borderBottom: '1px solid #2A2A2A' }}>
+                                  <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontSize: 12, color: '#F0EDE8' }}>{it.ean}</td>
+                                  <td style={{ padding: '10px 12px', color: '#F0EDE8' }}>{it.desc}</td>
+                                  <td colSpan={puedeEditar ? 5 : 5} style={{ padding: '10px 12px' }}>
+                                    <div style={{ fontSize: 12, color: '#FF6B6B', fontWeight: 600, marginBottom: 6 }}>Confirmar eliminacion de este registro?</div>
+                                    <div style={{ display: 'flex', gap: 8 }}>
+                                      <button onClick={() => confirmarEliminar(it.id)} style={{ background: '#C0392B', color: 'white', border: 'none', padding: '5px 14px', borderRadius: 5, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>Si, eliminar</button>
+                                      <button onClick={() => setDeleteId(null)} style={{ background: '#2A2A2A', color: '#aaa', border: 'none', padding: '5px 12px', borderRadius: 5, cursor: 'pointer', fontSize: 12 }}>Cancelar</button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+
+                              if (it.id === editId) return (
+                                <tr key={it.id} style={{ background: '#1A1A1A', borderBottom: '1px solid #2A2A2A' }}>
+                                  <td style={{ padding: '8px 12px', fontFamily: 'monospace', fontSize: 12, color: '#4ECDC4' }}>{it.ean}</td>
+                                  <td style={{ padding: '8px 12px', color: '#F0EDE8' }}>{it.desc}</td>
+                                  <td style={{ padding: '8px 12px' }}><input type="number" min="1" value={editQty} onChange={e => setEditQty(e.target.value)} style={{ ...inputStyle, width: 70, textAlign: 'center' }} /></td>
+                                  <td style={{ padding: '8px 12px' }}><input type="date" value={editVto} onChange={e => setEditVto(e.target.value)} style={inputStyle} /></td>
+                                  <td></td><td></td>
+                                  <td style={{ padding: '8px 12px' }}><input type="text" value={editRemito} onChange={e => setEditRemito(e.target.value)} placeholder="REM-..." style={inputStyle} /></td>
+                                  <td style={{ padding: '8px 12px', whiteSpace: 'nowrap' }}>
+                                    <button onClick={() => guardarEdicion(it.id)} style={{ background: '#0E6655', color: 'white', border: 'none', padding: '5px 12px', borderRadius: 5, cursor: 'pointer', fontSize: 12, marginRight: 4 }}>Guardar</button>
+                                    <button onClick={() => setEditId(null)} style={{ background: '#2A2A2A', color: '#aaa', border: 'none', padding: '5px 10px', borderRadius: 5, cursor: 'pointer', fontSize: 12 }}>×</button>
+                                  </td>
+                                </tr>
+                              );
+
+                              return (
+                                <tr key={it.id} style={{ background: s.bg, borderBottom: '1px solid #2A2A2A' }}>
+                                  <td style={{ padding: '10px 12px' }}><span style={{ fontFamily: 'monospace', fontSize: 12, background: '#222', padding: '2px 7px', borderRadius: 4, color: '#4ECDC4', fontWeight: 600 }}>{it.ean}</span></td>
+                                  <td style={{ padding: '10px 12px', color: '#F0EDE8' }}>{it.desc}</td>
+                                  <td style={{ padding: '10px 12px', color: '#aaa' }}>{it.qty ?? '—'}</td>
+                                  <td style={{ padding: '10px 12px', color: '#aaa' }}>{fmtF(it.vto)}</td>
+                                  <td style={{ padding: '10px 12px', color: s.diasColor, fontWeight: 600 }}>{diasLabel}</td>
+                                  <td style={{ padding: '10px 12px' }}>
+                                    <span style={{ display: 'inline-block', background: s.badge, color: s.badgeText, padding: '3px 10px', borderRadius: 12, fontSize: 11, fontWeight: 600, border: `1px solid ${s.badgeBorder}` }}>{s.label}</span>
+                                  </td>
+                                  <td style={{ padding: '10px 12px', color: '#666', fontSize: 12 }}>{it.remito || '—'}</td>
+                                  {puedeEditar && (
+                                    <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>
+                                      <button onClick={() => { setEditId(it.id); setEditVto(it.vto); setEditQty(it.qty ?? ''); setEditRemito(it.remito ?? ''); setDeleteId(null); }}
+                                        style={{ background: 'none', color: '#aaa', border: '1px solid #3A3A3A', padding: '4px 10px', borderRadius: 5, cursor: 'pointer', fontSize: 12, marginRight: 4 }}>Editar</button>
+                                      <button onClick={() => { setDeleteId(it.id); setEditId(null); }}
+                                        style={{ background: 'none', color: '#FF6B6B', border: '1px solid #C0392B', padding: '4px 10px', borderRadius: 5, cursor: 'pointer', fontSize: 12 }}>Eliminar</button>
+                                    </td>
+                                  )}
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Modal código generado */}
+                {codigoGeneradoVto && (
+                  <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 16 }}>
+                    <div style={{ background: '#1A1A1A', border: '1px solid #3A3A3A', borderRadius: 16, padding: 28, maxWidth: 400, width: '100%', textAlign: 'center' }}>
+                      <div style={{ fontSize: 36, marginBottom: 8 }}>🔑</div>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: '#F0EDE8', marginBottom: 6 }}>Código generado</div>
+                      <div style={{ fontSize: 12, color: '#888', marginBottom: 20 }}>Compartilo con el encargado por WhatsApp. Vence en 30 días. Puede ser usado por múltiples personas.</div>
+                      <div style={{ background: '#0F0F0F', border: '2px dashed #4ECDC4', borderRadius: 10, padding: '18px 12px', marginBottom: 20, fontFamily: 'monospace', fontSize: 22, fontWeight: 700, letterSpacing: '0.12em', color: '#4ECDC4' }}>
+                        {codigoGeneradoVto.codigo}
+                      </div>
+                      <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+                        <button onClick={() => navigator.clipboard.writeText(codigoGeneradoVto.codigo)}
+                          style={{ background: '#2A2A2A', color: '#F0EDE8', border: '1px solid #3A3A3A', padding: '10px 18px', borderRadius: 8, fontSize: 13, cursor: 'pointer', fontWeight: 500 }}>
+                          Copiar
+                        </button>
+                        <button onClick={() => compartirWhatsAppVto(codigoGeneradoVto)}
+                          style={{ background: '#1A3A1A', color: '#4DFF91', border: '1px solid #2A5A2A', padding: '10px 18px', borderRadius: 8, fontSize: 13, cursor: 'pointer', fontWeight: 500 }}>
+                          WhatsApp
+                        </button>
+                        <button onClick={() => setCodigoGeneradoVto(null)}
+                          style={{ background: '#1E3A5F', color: 'white', border: 'none', padding: '10px 18px', borderRadius: 8, fontSize: 13, cursor: 'pointer', fontWeight: 600 }}>
+                          Listo
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          };
+
           return (
             <div>
               {vista === 'login' && <VistaLogin />}
@@ -3276,6 +3766,7 @@
               {vista === 'dashboard' && <VistaDashboard />}
               {vista === 'horarios' && <VistaHorarios />}
               {vista === 'asistente' && <VistaAsistente />}
+              {vista === 'vencimientos' && <VistaVencimientos />}
             </div>
           );
         }
