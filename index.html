@@ -287,6 +287,9 @@
           { id: 'control_gestion',  nombre: 'Control de Gestión',color: '#AFA9EC', roles: ['Control de Gestión'] },
         ];
 
+        // Rubros habilitados para el módulo de Vencimientos (subconjunto de AREAS_DEFAULT)
+        const RUBROS_VENCIMIENTOS = AREAS_DEFAULT.filter(a => ['perfumeria', 'golosinas'].includes(a.id));
+
         const TURNOS_TIPICOS = [
           { label: 'Mañana corta', entrada: '08:00', salida: '14:00' },
           { label: 'Mañana larga', entrada: '07:30', salida: '15:30' },
@@ -3339,7 +3342,7 @@
             const [invitaciones, setInvitaciones] = useState([]);
             const [mostrandoInvitaciones, setMostrandoInvitaciones] = useState(false);
             const [codigoGeneradoVto, setCodigoGeneradoVto] = useState(null);
-            const [rubroParaInvitar, setRubroParaInvitar] = useState(AREAS_DEFAULT[0].id);
+            const [rubroParaInvitar, setRubroParaInvitar] = useState(RUBROS_VENCIMIENTOS[0].id);
 
             const [formEan, setFormEan] = useState('');
             const [formDesc, setFormDesc] = useState('');
@@ -3397,7 +3400,7 @@
 
             const generarInvitacionVto = async () => {
               const sufijo = Math.random().toString(36).substring(2, 7).toUpperCase();
-              const codigo = `VTO-${sucursalVto}-${rubroParaInvitar}-${sufijo}`;
+              const codigo = `VTO-${sucursalVto}-${rubroParaInvitar.toUpperCase()}-${sufijo}`;
               const nueva = {
                 codigo,
                 sucursal: sucursalVto,
@@ -3591,7 +3594,7 @@
                         <div style={{ fontSize: 13, fontWeight: 600, color: '#F0EDE8' }}>Encargados de vencimientos — {sucursalVto}</div>
                         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                           <select value={rubroParaInvitar} onChange={e => setRubroParaInvitar(e.target.value)} style={{ ...inputStyle, width: 'auto' }}>
-                            {AREAS_DEFAULT.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
+                            {RUBROS_VENCIMIENTOS.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
                           </select>
                           <button onClick={generarInvitacionVto}
                             style={{ background: '#FF6B35', color: 'white', border: 'none', padding: '7px 16px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
@@ -3667,7 +3670,7 @@
                           {esAdmin ? (
                             <select value={formRubro} onChange={e => setFormRubro(e.target.value)} style={inputStyle}>
                               <option value="">Seleccionar rubro...</option>
-                              {AREAS_DEFAULT.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
+                              {RUBROS_VENCIMIENTOS.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
                             </select>
                           ) : (
                             <div style={{ ...inputStyle, display: 'flex', alignItems: 'center', gap: 6, background: '#1A1A1A', color: rubroInfo(rubroVto)?.color || '#F0EDE8', fontWeight: 600 }}>
@@ -3710,7 +3713,7 @@
                       {esAdmin && (
                         <select value={filtroRubro} onChange={e => setFiltroRubro(e.target.value)} style={{ ...inputStyle, width: 'auto' }}>
                           <option value="">Todos los rubros</option>
-                          {AREAS_DEFAULT.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
+                          {RUBROS_VENCIMIENTOS.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
                         </select>
                       )}
                       <select value={filtroEst} onChange={e => setFiltroEst(e.target.value)} style={{ ...inputStyle, width: 'auto' }}>
@@ -3767,7 +3770,7 @@
                                     {esAdmin ? (
                                       <select value={editRubro} onChange={e => setEditRubro(e.target.value)} style={{ ...inputStyle, minWidth: 120 }}>
                                         <option value="">Sin rubro</option>
-                                        {AREAS_DEFAULT.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
+                                        {RUBROS_VENCIMIENTOS.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
                                       </select>
                                     ) : (
                                       it.rubro && <span style={{ fontSize: 10, fontWeight: 600, color: rubroInfo(it.rubro)?.color || '#aaa', border: `1px solid ${rubroInfo(it.rubro)?.color || '#444'}`, borderRadius: 10, padding: '2px 8px', whiteSpace: 'nowrap' }}>{rubroInfo(it.rubro)?.nombre || it.rubro}</span>
