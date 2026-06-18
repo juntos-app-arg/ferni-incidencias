@@ -16,7 +16,7 @@
     
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone@7.26.4/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
@@ -505,6 +505,7 @@
           const [esLider, setEsLider] = useState(sesionGuardada?.esLider || false);
           const [areaLider, setAreaLider] = useState(sesionGuardada?.areaLider || null);
           const [esEncargadoVencimientos, setEsEncargadoVencimientos] = useState(sesionGuardada?.esEncargadoVencimientos || false);
+          const [rubroVto, setRubroVto] = useState(sesionGuardada?.rubroVto || null);
           const [reportes, setReportes] = useState([]);
           const [reportesNuevos, setReportesNuevos] = useState([]);
           const [contadorNuevos, setContadorNuevos] = useState(0);
@@ -733,7 +734,8 @@
                   sucursalUsuario: inv.sucursal,
                   sucursalActiva: inv.sucursal,
                   esAdmin: false, esGerente: false, esLider: false,
-                  esEncargadoVencimientos: true
+                  esEncargadoVencimientos: true,
+                  rubroVto: inv.rubro || null
                 };
                 guardarSesion(sesion);
                 setUsuario(sesion.usuario);
@@ -742,6 +744,7 @@
                 setSucursalActiva(sesion.sucursalActiva);
                 setEsAdmin(false); setEsGerente(false); setEsLider(false);
                 setEsEncargadoVencimientos(true);
+                setRubroVto(sesion.rubroVto);
                 setVista('vencimientos');
               } catch(err) {
                 setErrorVto('Error al validar el código. Revisá tu conexión.');
@@ -900,7 +903,7 @@
                       </div>
                       <div style={{ fontSize: 13, opacity: 0.7, marginTop: 2 }}>Hola, {usuario} {esAdmin && '👑'}</div>
                     </div>
-                    <button onClick={() => { borrarSesion(); setUsuario(null); setUsuarioEmail(null); setSucursalUsuario(null); setSucursalActiva(null); setEsAdmin(false); setEsGerente(false); setEsLider(false); setAreaLider(null); setEsEncargadoVencimientos(false); setReportes([]); setVista('login'); }} style={{ fontSize: 12, opacity: 0.6, background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}>Salir</button>
+                    <button onClick={() => { borrarSesion(); setUsuario(null); setUsuarioEmail(null); setSucursalUsuario(null); setSucursalActiva(null); setEsAdmin(false); setEsGerente(false); setEsLider(false); setAreaLider(null); setEsEncargadoVencimientos(false); setRubroVto(null); setReportes([]); setVista('login'); }} style={{ fontSize: 12, opacity: 0.6, background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}>Salir</button>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginTop: 14 }}>
                     {[
@@ -2319,7 +2322,7 @@
                       <button onClick={volverAIncidencias} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: 'white', padding: '6px 12px', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>Inicio</button>
                     )}
                     {esLider && (
-                      <button onClick={() => { borrarSesion(); setUsuario(null); setUsuarioEmail(null); setSucursalUsuario(null); setSucursalActiva(null); setEsAdmin(false); setEsGerente(false); setEsLider(false); setAreaLider(null); setReportes([]); setVista('login'); }} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: 'white', padding: '6px 12px', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>Salir</button>
+                      <button onClick={() => { borrarSesion(); setUsuario(null); setUsuarioEmail(null); setSucursalUsuario(null); setSucursalActiva(null); setEsAdmin(false); setEsGerente(false); setEsLider(false); setAreaLider(null); setEsEncargadoVencimientos(false); setRubroVto(null); setReportes([]); setVista('login'); }} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: 'white', padding: '6px 12px', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>Salir</button>
                     )}
                   </div>
                 </div>
@@ -3336,21 +3339,27 @@
             const [invitaciones, setInvitaciones] = useState([]);
             const [mostrandoInvitaciones, setMostrandoInvitaciones] = useState(false);
             const [codigoGeneradoVto, setCodigoGeneradoVto] = useState(null);
+            const [rubroParaInvitar, setRubroParaInvitar] = useState(AREAS_DEFAULT[0].id);
 
             const [formEan, setFormEan] = useState('');
             const [formDesc, setFormDesc] = useState('');
             const [formVto, setFormVto] = useState('');
             const [formQty, setFormQty] = useState('');
             const [formRemito, setFormRemito] = useState('');
+            const [formRubro, setFormRubro] = useState(esAdmin ? '' : (rubroVto || ''));
             const [formError, setFormError] = useState('');
 
             const [buscar, setBuscar] = useState('');
             const [filtroEst, setFiltroEst] = useState('');
+            const [filtroRubro, setFiltroRubro] = useState('');
             const [editId, setEditId] = useState(null);
             const [editVto, setEditVto] = useState('');
             const [editQty, setEditQty] = useState('');
             const [editRemito, setEditRemito] = useState('');
+            const [editRubro, setEditRubro] = useState('');
             const [deleteId, setDeleteId] = useState(null);
+
+            const rubroInfo = (id) => AREAS_DEFAULT.find(a => a.id === id);
 
             const colRef = db.collection('vencimientos').doc(sucursalVto).collection('items');
             const configRef = db.collection('vencimientos').doc(sucursalVto);
@@ -3388,10 +3397,11 @@
 
             const generarInvitacionVto = async () => {
               const sufijo = Math.random().toString(36).substring(2, 7).toUpperCase();
-              const codigo = `VTO-${sucursalVto}-${sufijo}`;
+              const codigo = `VTO-${sucursalVto}-${rubroParaInvitar}-${sufijo}`;
               const nueva = {
                 codigo,
                 sucursal: sucursalVto,
+                rubro: rubroParaInvitar,
                 creadaPor: usuario,
                 creadaEn: firebase.firestore.FieldValue.serverTimestamp(),
                 expiraEn: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 días
@@ -3412,8 +3422,9 @@
             };
 
             const compartirWhatsAppVto = (inv) => {
+              const nombreRubro = rubroInfo(inv.rubro)?.nombre || inv.rubro || '';
               const mensaje = encodeURIComponent(
-                `Hola! Te invito a ser encargado/a de Control de Vencimientos en FERNI ${inv.sucursal}.\n\n` +
+                `Hola! Te invito a ser encargado/a de Control de Vencimientos de *${nombreRubro}* en FERNI ${inv.sucursal}.\n\n` +
                 `Tu código de acceso es: *${inv.codigo}*\n\n` +
                 `Entrá a la app FERNI, elegí "Vencimientos" en el login y usá ese código. Vence en 30 días.`
               );
@@ -3444,16 +3455,19 @@
             const agregarItem = async () => {
               setFormError('');
               if (!formEan.trim() || !formDesc.trim() || !formVto) { setFormError('EAN/SKU, descripcion y vencimiento son obligatorios.'); return; }
+              if (!formRubro) { setFormError('Seleccioná el rubro del producto.'); return; }
               await colRef.add({
                 ean: formEan.trim(),
                 desc: formDesc.trim(),
                 vto: formVto,
                 qty: formQty ? parseInt(formQty) : null,
                 remito: formRemito.trim(),
+                rubro: formRubro,
                 creadoPor: usuario,
                 creadoEn: firebase.firestore.FieldValue.serverTimestamp()
               });
               setFormEan(''); setFormDesc(''); setFormVto(''); setFormQty(''); setFormRemito('');
+              if (esAdmin) setFormRubro('');
             };
 
             const guardarEdicion = async (id) => {
@@ -3462,6 +3476,7 @@
                 vto: editVto,
                 qty: editQty ? parseInt(editQty) : null,
                 remito: editRemito,
+                rubro: editRubro || null,
                 editadoPor: usuario,
                 editadoEn: firebase.firestore.FieldValue.serverTimestamp()
               });
@@ -3480,13 +3495,18 @@
               normal:  { bg: 'transparent',          badge: '#e0f6f5', badgeText: '#0E6655', badgeBorder: '#4ECDC4', diasColor: '#0E6655', label: 'Normal' }
             };
 
-            const visible = items.filter(it => {
+            // Alcance por rubro: un encargado solo ve su rubro asignado; el admin ve todo o filtra
+            const itemsScope = esAdmin
+              ? (filtroRubro ? items.filter(it => it.rubro === filtroRubro) : items)
+              : items.filter(it => it.rubro === rubroVto);
+
+            const visible = itemsScope.filter(it => {
               const m = it.ean?.toLowerCase().includes(buscar.toLowerCase()) || it.desc?.toLowerCase().includes(buscar.toLowerCase());
               return m && (!filtroEst || getEstado(it.vto) === filtroEst);
             }).sort((a, b) => diasHasta(a.vto) - diasHasta(b.vto));
 
             const cnt = { vencido: 0, critico: 0, alerta: 0, normal: 0 };
-            items.forEach(it => cnt[getEstado(it.vto)]++);
+            itemsScope.forEach(it => cnt[getEstado(it.vto)]++);
 
             const headerStyle = { background: '#1E3A5F', color: 'white', padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' };
             const secStyle = { background: '#1A1A1A', border: '1px solid #2A2A2A', borderRadius: 10, padding: '16px 18px', marginBottom: 14 };
@@ -3499,7 +3519,7 @@
                 <div style={headerStyle}>
                   <div>
                     <div style={{ fontSize: 17, fontWeight: 600 }}>Vencimientos</div>
-                    <div style={{ fontSize: 11, opacity: 0.6 }}>FERNI 3 · {puedeEditar ? (esAdmin ? 'Admin' : 'Encargado') : 'Solo lectura'}</div>
+                    <div style={{ fontSize: 11, opacity: 0.6 }}>FERNI 3 · {esAdmin ? 'Admin' : esEncargadoVencimientos ? `Encargado · ${rubroInfo(rubroVto)?.nombre || 'Sin rubro asignado'}` : 'Solo lectura'}</div>
                   </div>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                     {esAdmin && (
@@ -3567,12 +3587,17 @@
                   {/* Panel invitaciones — solo admin */}
                   {mostrandoInvitaciones && esAdmin && (
                     <div style={secStyle}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 10 }}>
                         <div style={{ fontSize: 13, fontWeight: 600, color: '#F0EDE8' }}>Encargados de vencimientos — {sucursalVto}</div>
-                        <button onClick={generarInvitacionVto}
-                          style={{ background: '#FF6B35', color: 'white', border: 'none', padding: '7px 16px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-                          + Generar código
-                        </button>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <select value={rubroParaInvitar} onChange={e => setRubroParaInvitar(e.target.value)} style={{ ...inputStyle, width: 'auto' }}>
+                            {AREAS_DEFAULT.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
+                          </select>
+                          <button onClick={generarInvitacionVto}
+                            style={{ background: '#FF6B35', color: 'white', border: 'none', padding: '7px 16px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                            + Generar código
+                          </button>
+                        </div>
                       </div>
 
                       {invitaciones.length === 0 ? (
@@ -3588,7 +3613,14 @@
                             <div key={inv.codigo} style={{ background: '#222', borderRadius: 8, padding: '12px 14px', marginBottom: 8, border: `1px solid ${inv.revocado ? '#3A1A1A' : expirado ? '#2A2A2A' : '#2A3A2A'}` }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
                                 <div>
-                                  <div style={{ fontFamily: 'monospace', fontSize: 16, fontWeight: 700, letterSpacing: '0.1em', color: inv.revocado ? '#555' : expirado ? '#666' : '#4ECDC4' }}>{inv.codigo}</div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                                    <div style={{ fontFamily: 'monospace', fontSize: 16, fontWeight: 700, letterSpacing: '0.1em', color: inv.revocado ? '#555' : expirado ? '#666' : '#4ECDC4' }}>{inv.codigo}</div>
+                                    {inv.rubro && (
+                                      <span style={{ fontSize: 10, fontWeight: 600, color: rubroInfo(inv.rubro)?.color || '#aaa', border: `1px solid ${rubroInfo(inv.rubro)?.color || '#444'}`, borderRadius: 10, padding: '2px 8px' }}>
+                                        {rubroInfo(inv.rubro)?.nombre || inv.rubro}
+                                      </span>
+                                    )}
+                                  </div>
                                   <div style={{ fontSize: 11, color: '#666', marginTop: 3 }}>
                                     {inv.revocado && <span style={{ color: '#FF6B6B' }}>Revocado</span>}
                                     {!inv.revocado && expirado && <span style={{ color: '#FF6B6B' }}>Expirado</span>}
@@ -3631,6 +3663,19 @@
                       <div style={{ fontSize: 13, fontWeight: 600, color: '#F0EDE8', marginBottom: 14 }}>Registrar producto</div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                         <div>
+                          <label style={labelStyle}>Rubro *</label>
+                          {esAdmin ? (
+                            <select value={formRubro} onChange={e => setFormRubro(e.target.value)} style={inputStyle}>
+                              <option value="">Seleccionar rubro...</option>
+                              {AREAS_DEFAULT.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
+                            </select>
+                          ) : (
+                            <div style={{ ...inputStyle, display: 'flex', alignItems: 'center', gap: 6, background: '#1A1A1A', color: rubroInfo(rubroVto)?.color || '#F0EDE8', fontWeight: 600 }}>
+                              {rubroInfo(rubroVto)?.nombre || 'Sin rubro asignado — consultá al admin'}
+                            </div>
+                          )}
+                        </div>
+                        <div>
                           <label style={labelStyle}>EAN / SKU *</label>
                           <input type="text" placeholder="ej: 7790895001234" value={formEan} onChange={e => setFormEan(e.target.value)} style={inputStyle} />
                         </div>
@@ -3658,10 +3703,16 @@
 
                   {/* Tabla */}
                   <div style={secStyle}>
-                    <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
+                    <div style={{ display: 'flex', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
                       <input type="text" placeholder="Buscar por EAN, SKU o descripcion..." value={buscar}
                         onChange={e => setBuscar(e.target.value)}
-                        style={{ ...inputStyle, flex: 1 }} />
+                        style={{ ...inputStyle, flex: 1, minWidth: 180 }} />
+                      {esAdmin && (
+                        <select value={filtroRubro} onChange={e => setFiltroRubro(e.target.value)} style={{ ...inputStyle, width: 'auto' }}>
+                          <option value="">Todos los rubros</option>
+                          {AREAS_DEFAULT.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
+                        </select>
+                      )}
                       <select value={filtroEst} onChange={e => setFiltroEst(e.target.value)} style={{ ...inputStyle, width: 'auto' }}>
                         <option value="">Todos</option>
                         <option value="vencido">Vencido</option>
@@ -3680,7 +3731,7 @@
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                           <thead>
                             <tr style={{ background: '#1E3A5F', color: 'white' }}>
-                              {['EAN / SKU','Descripcion','Cantidad','Vencimiento','Dias','Estado','Remito', puedeEditar ? 'Acciones' : ''].filter(Boolean).map(h => (
+                              {['EAN / SKU','Rubro','Descripcion','Cantidad','Vencimiento','Dias','Estado','Remito', puedeEditar ? 'Acciones' : ''].filter(Boolean).map(h => (
                                 <th key={h} style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 500, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.4px', whiteSpace: 'nowrap' }}>{h}</th>
                               ))}
                             </tr>
@@ -3695,8 +3746,11 @@
                               if (it.id === deleteId) return (
                                 <tr key={it.id} style={{ background: 'rgba(192,57,43,0.12)', borderBottom: '1px solid #2A2A2A' }}>
                                   <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontSize: 12, color: '#F0EDE8' }}>{it.ean}</td>
+                                  <td style={{ padding: '10px 12px' }}>
+                                    {it.rubro && <span style={{ fontSize: 10, fontWeight: 600, color: rubroInfo(it.rubro)?.color || '#aaa', border: `1px solid ${rubroInfo(it.rubro)?.color || '#444'}`, borderRadius: 10, padding: '2px 8px', whiteSpace: 'nowrap' }}>{rubroInfo(it.rubro)?.nombre || it.rubro}</span>}
+                                  </td>
                                   <td style={{ padding: '10px 12px', color: '#F0EDE8' }}>{it.desc}</td>
-                                  <td colSpan={puedeEditar ? 5 : 5} style={{ padding: '10px 12px' }}>
+                                  <td colSpan={puedeEditar ? 6 : 5} style={{ padding: '10px 12px' }}>
                                     <div style={{ fontSize: 12, color: '#FF6B6B', fontWeight: 600, marginBottom: 6 }}>Confirmar eliminacion de este registro?</div>
                                     <div style={{ display: 'flex', gap: 8 }}>
                                       <button onClick={() => confirmarEliminar(it.id)} style={{ background: '#C0392B', color: 'white', border: 'none', padding: '5px 14px', borderRadius: 5, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>Si, eliminar</button>
@@ -3709,6 +3763,16 @@
                               if (it.id === editId) return (
                                 <tr key={it.id} style={{ background: '#1A1A1A', borderBottom: '1px solid #2A2A2A' }}>
                                   <td style={{ padding: '8px 12px', fontFamily: 'monospace', fontSize: 12, color: '#4ECDC4' }}>{it.ean}</td>
+                                  <td style={{ padding: '8px 12px' }}>
+                                    {esAdmin ? (
+                                      <select value={editRubro} onChange={e => setEditRubro(e.target.value)} style={{ ...inputStyle, minWidth: 120 }}>
+                                        <option value="">Sin rubro</option>
+                                        {AREAS_DEFAULT.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
+                                      </select>
+                                    ) : (
+                                      it.rubro && <span style={{ fontSize: 10, fontWeight: 600, color: rubroInfo(it.rubro)?.color || '#aaa', border: `1px solid ${rubroInfo(it.rubro)?.color || '#444'}`, borderRadius: 10, padding: '2px 8px', whiteSpace: 'nowrap' }}>{rubroInfo(it.rubro)?.nombre || it.rubro}</span>
+                                    )}
+                                  </td>
                                   <td style={{ padding: '8px 12px', color: '#F0EDE8' }}>{it.desc}</td>
                                   <td style={{ padding: '8px 12px' }}><input type="number" min="1" value={editQty} onChange={e => setEditQty(e.target.value)} style={{ ...inputStyle, width: 70, textAlign: 'center' }} /></td>
                                   <td style={{ padding: '8px 12px' }}><input type="date" value={editVto} onChange={e => setEditVto(e.target.value)} style={inputStyle} /></td>
@@ -3724,6 +3788,13 @@
                               return (
                                 <tr key={it.id} style={{ background: s.bg, borderBottom: '1px solid #2A2A2A' }}>
                                   <td style={{ padding: '10px 12px' }}><span style={{ fontFamily: 'monospace', fontSize: 12, background: '#222', padding: '2px 7px', borderRadius: 4, color: '#4ECDC4', fontWeight: 600 }}>{it.ean}</span></td>
+                                  <td style={{ padding: '10px 12px' }}>
+                                    {it.rubro ? (
+                                      <span style={{ fontSize: 10, fontWeight: 600, color: rubroInfo(it.rubro)?.color || '#aaa', border: `1px solid ${rubroInfo(it.rubro)?.color || '#444'}`, borderRadius: 10, padding: '2px 8px', whiteSpace: 'nowrap' }}>{rubroInfo(it.rubro)?.nombre || it.rubro}</span>
+                                    ) : (
+                                      <span style={{ fontSize: 11, color: '#555' }}>—</span>
+                                    )}
+                                  </td>
                                   <td style={{ padding: '10px 12px', color: '#F0EDE8' }}>{it.desc}</td>
                                   <td style={{ padding: '10px 12px', color: '#aaa' }}>{it.qty ?? '—'}</td>
                                   <td style={{ padding: '10px 12px', color: '#aaa' }}>{fmtF(it.vto)}</td>
@@ -3734,7 +3805,7 @@
                                   <td style={{ padding: '10px 12px', color: '#666', fontSize: 12 }}>{it.remito || '—'}</td>
                                   {puedeEditar && (
                                     <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>
-                                      <button onClick={() => { setEditId(it.id); setEditVto(it.vto); setEditQty(it.qty ?? ''); setEditRemito(it.remito ?? ''); setDeleteId(null); }}
+                                      <button onClick={() => { setEditId(it.id); setEditVto(it.vto); setEditQty(it.qty ?? ''); setEditRemito(it.remito ?? ''); setEditRubro(it.rubro || ''); setDeleteId(null); }}
                                         style={{ background: 'none', color: '#aaa', border: '1px solid #3A3A3A', padding: '4px 10px', borderRadius: 5, cursor: 'pointer', fontSize: 12, marginRight: 4 }}>Editar</button>
                                       <button onClick={() => { setDeleteId(it.id); setEditId(null); }}
                                         style={{ background: 'none', color: '#FF6B6B', border: '1px solid #C0392B', padding: '4px 10px', borderRadius: 5, cursor: 'pointer', fontSize: 12 }}>Eliminar</button>
