@@ -2060,7 +2060,7 @@
                   <div ref={mensajesEndRef}></div>
                 </div>
 
-                <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-3 shadow-lg">
+                <div className="fixed bottom-16 left-0 right-0 bg-white border-t p-3 shadow-lg">
                   <div className="flex gap-2 max-w-3xl mx-auto">
                     <input
                       type="text"
@@ -3400,7 +3400,8 @@
 
             const generarInvitacionVto = async () => {
               const sufijo = Math.random().toString(36).substring(2, 7).toUpperCase();
-              const codigo = `VTO-${sucursalVto}-${rubroParaInvitar.toUpperCase()}-${sufijo}`;
+              const rubroSufijo = rubroParaInvitar === 'todos' ? 'TODOS' : rubroParaInvitar.toUpperCase();
+              const codigo = `VTO-${sucursalVto}-${rubroSufijo}-${sufijo}`;
               const nueva = {
                 codigo,
                 sucursal: sucursalVto,
@@ -3425,7 +3426,7 @@
             };
 
             const compartirWhatsAppVto = (inv) => {
-              const nombreRubro = rubroInfo(inv.rubro)?.nombre || inv.rubro || '';
+              const nombreRubro = inv.rubro === 'todos' ? 'Perfumería y Golosinas' : rubroInfo(inv.rubro)?.nombre || inv.rubro || '';
               const mensaje = encodeURIComponent(
                 `Hola! Te invito a ser encargado/a de Control de Vencimientos de *${nombreRubro}* en FERNI ${inv.sucursal}.\n\n` +
                 `Tu código de acceso es: *${inv.codigo}*\n\n` +
@@ -3498,10 +3499,12 @@
               normal:  { bg: 'transparent',          badge: '#e0f6f5', badgeText: '#0E6655', badgeBorder: '#4ECDC4', diasColor: '#0E6655', label: 'Normal' }
             };
 
-            // Alcance por rubro: un encargado solo ve su rubro asignado; el admin ve todo o filtra
+            // Alcance por rubro: un encargado solo ve su rubro asignado; "todos" ve ambos; el admin ve todo o filtra
             const itemsScope = esAdmin
               ? (filtroRubro ? items.filter(it => it.rubro === filtroRubro) : items)
-              : items.filter(it => it.rubro === rubroVto);
+              : rubroVto === 'todos'
+                ? items
+                : items.filter(it => it.rubro === rubroVto);
 
             const visible = itemsScope.filter(it => {
               const m = it.ean?.toLowerCase().includes(buscar.toLowerCase()) || it.desc?.toLowerCase().includes(buscar.toLowerCase());
@@ -3522,7 +3525,7 @@
                 <div style={headerStyle}>
                   <div>
                     <div style={{ fontSize: 17, fontWeight: 600 }}>Vencimientos</div>
-                    <div style={{ fontSize: 11, opacity: 0.6 }}>FERNI 3 · {esAdmin ? 'Admin' : esEncargadoVencimientos ? `Encargado · ${rubroInfo(rubroVto)?.nombre || 'Sin rubro asignado'}` : 'Solo lectura'}</div>
+                    <div style={{ fontSize: 11, opacity: 0.6 }}>FERNI 3 · {esAdmin ? 'Admin' : esEncargadoVencimientos ? `Encargado · ${rubroVto === 'todos' ? 'Todos los rubros' : rubroInfo(rubroVto)?.nombre || 'Sin rubro asignado'}` : 'Solo lectura'}</div>
                   </div>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                     {esAdmin && (
@@ -3595,6 +3598,7 @@
                         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                           <select value={rubroParaInvitar} onChange={e => setRubroParaInvitar(e.target.value)} style={{ ...inputStyle, width: 'auto' }}>
                             {RUBROS_VENCIMIENTOS.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
+                            <option value="todos">Ambos rubros</option>
                           </select>
                           <button onClick={generarInvitacionVto}
                             style={{ background: '#FF6B35', color: 'white', border: 'none', padding: '7px 16px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
@@ -3619,8 +3623,8 @@
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                                     <div style={{ fontFamily: 'monospace', fontSize: 16, fontWeight: 700, letterSpacing: '0.1em', color: inv.revocado ? '#555' : expirado ? '#666' : '#4ECDC4' }}>{inv.codigo}</div>
                                     {inv.rubro && (
-                                      <span style={{ fontSize: 10, fontWeight: 600, color: rubroInfo(inv.rubro)?.color || '#aaa', border: `1px solid ${rubroInfo(inv.rubro)?.color || '#444'}`, borderRadius: 10, padding: '2px 8px' }}>
-                                        {rubroInfo(inv.rubro)?.nombre || inv.rubro}
+                                      <span style={{ fontSize: 10, fontWeight: 600, color: inv.rubro === 'todos' ? '#4ECDC4' : rubroInfo(inv.rubro)?.color || '#aaa', border: `1px solid ${inv.rubro === 'todos' ? '#4ECDC4' : rubroInfo(inv.rubro)?.color || '#444'}`, borderRadius: 10, padding: '2px 8px' }}>
+                                        {inv.rubro === 'todos' ? 'Ambos rubros' : rubroInfo(inv.rubro)?.nombre || inv.rubro}
                                       </span>
                                     )}
                                   </div>
@@ -3667,7 +3671,7 @@
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                         <div>
                           <label style={labelStyle}>Rubro *</label>
-                          {esAdmin ? (
+                          {esAdmin || rubroVto === 'todos' ? (
                             <select value={formRubro} onChange={e => setFormRubro(e.target.value)} style={inputStyle}>
                               <option value="">Seleccionar rubro...</option>
                               {RUBROS_VENCIMIENTOS.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
