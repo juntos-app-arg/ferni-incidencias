@@ -3499,12 +3499,13 @@
               normal:  { bg: 'transparent',          badge: '#e0f6f5', badgeText: '#0E6655', badgeBorder: '#4ECDC4', diasColor: '#0E6655', label: 'Normal' }
             };
 
-            // Alcance por rubro: un encargado solo ve su rubro asignado; "todos" ve ambos; el admin ve todo o filtra
+            // Alcance por rubro: un encargado solo ve su rubro asignado; "todos" ve ambos; el admin ve todo o filtra;
+            // un usuario normal (solo lectura) ve todos los rubros
             const itemsScope = esAdmin
               ? (filtroRubro ? items.filter(it => it.rubro === filtroRubro) : items)
-              : rubroVto === 'todos'
-                ? items
-                : items.filter(it => it.rubro === rubroVto);
+              : esEncargadoVencimientos
+                ? (rubroVto === 'todos' ? items : items.filter(it => it.rubro === rubroVto))
+                : items;
 
             const visible = itemsScope.filter(it => {
               const m = it.ean?.toLowerCase().includes(buscar.toLowerCase()) || it.desc?.toLowerCase().includes(buscar.toLowerCase());
