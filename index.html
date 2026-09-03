@@ -343,18 +343,41 @@
         // Todo usuario (empleado, lider, encargado) obtiene una sesion ANONIMA de
         // Firebase. Es lo que permite que las reglas exijan request.auth != null y
         // que la base deje de estar abierta a cualquiera con la URL del proyecto.
-        const asegurarAuth = async () => {
-          if (auth.currentUser) return auth.currentUser;
-          try {
-            const cred = await auth.signInAnonymously();
-            return cred.user;
-          } catch (err) {
-            console.warn(
-              'No se pudo iniciar sesion anonima (' + (err.code || err.message) + '). ' +
-              'Activar Firebase Console > Authentication > Sign-in method > Anonymous.'
-            );
-            return null;
-          }
+        // Firebase restaura la sesion guardada de forma ASINCRONICA: apenas carga la
+        // pagina, auth.currentUser todavia es null aunque haya un admin logueado.
+        // Hay que esperar el primer evento de onAuthStateChanged antes de decidir
+        // si hace falta una sesion anonima; si no, se pisa la sesion del admin con
+        // una anonima nueva en cada carga (y encima se crea un usuario por visita).
+        const authInicial = new Promise(resolve => {
+          const unsub = auth.onAuthStateChanged(user => {
+            resolve(user);
+            // Desuscribirse en el proximo tick, NO aca adentro: sacarse de la lista
+            // mientras Firebase la esta recorriendo puede hacer que se saltee al
+            // siguiente listener (el que revalida los permisos de admin).
+            setTimeout(unsub, 0);
+          });
+        });
+
+        let authEnCurso = null;
+        const asegurarAuth = () => {
+          if (auth.currentUser) return Promise.resolve(auth.currentUser);
+          if (authEnCurso) return authEnCurso;          // evita crear varias sesiones anonimas a la vez
+          authEnCurso = (async () => {
+            await authInicial;                          // esperar a que Firebase restaure lo guardado
+            if (auth.currentUser) return auth.currentUser;   // ya hay sesion (admin o anonima): no tocarla
+            try {
+              const cred = await auth.signInAnonymously();
+              return cred.user;
+            } catch (err) {
+              console.warn(
+                'No se pudo iniciar sesion anonima (' + (err.code || err.message) + '). ' +
+                'Activar Firebase Console > Authentication > Sign-in method > Anonymous.'
+              );
+              return null;
+            }
+          })();
+          authEnCurso.finally(() => { authEnCurso = null; });
+          return authEnCurso;
         };
 
         // Un usuario es admin SOLO si existe el documento admins/{uid} en Firestore.
@@ -399,6 +422,23 @@
         };
 
         const emailValido = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(v || '').trim());
+
+        // iOS no implementa window.print() cuando la app corre instalada en la pantalla
+        // de inicio: el boton no hace absolutamente nada y no avisa. En ese caso hay que
+        // abrir la misma pagina en Safari, donde imprimir si funciona.
+        const appInstaladaEnIOS = () =>
+          window.navigator.standalone === true ||
+          (/iPad|iPhone|iPod/.test(navigator.userAgent) &&
+           window.matchMedia('(display-mode: standalone)').matches);
+
+        const imprimirPagina = () => {
+          if (appInstaladaEnIOS()) {
+            alert('Para imprimir o guardar el PDF, iOS necesita abrir el dashboard en el navegador.\n\nTe lo abro en Safari: ahí tocá de nuevo "Imprimir / Descargar PDF", o usá Compartir → Imprimir.');
+            abrirExterno(window.location.href);
+            return;
+          }
+          window.print();
+        };
         const limpiarTexto = (v, max) => String(v == null ? '' : v).replace(/\s+$/, '').slice(0, max);
         const abrirExterno = (url) => window.open(url, '_blank', 'noopener,noreferrer');
 
@@ -1834,7 +1874,7 @@
                   <div className="flex justify-between items-center mb-4">
                     <button onClick={() => setVista('lista')} className="text-blue-100 hover:text-white">← Volver</button>
                     <button 
-                      onClick={() => window.print()} 
+                      onClick={imprimirPagina}
                       className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition text-sm flex items-center gap-2"
                     >
                       🖨️ Imprimir / Descargar PDF
