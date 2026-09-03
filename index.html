@@ -2,22 +2,81 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="FERNI 3">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0F0F0F">
+    <meta name="description" content="Aplicacion interna de FERNI 3 para gestion de incidencias, horarios y vencimientos.">
+    <!-- App interna: no debe aparecer en buscadores -->
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+
+    <!--
+      Content-Security-Policy: limita de donde puede cargarse codigo y hacia donde
+      puede enviar datos la pagina. Reduce el impacto de un XSS o de un CDN comprometido.
+      'unsafe-inline'/'unsafe-eval' siguen siendo necesarios mientras se use Babel
+      Standalone + Tailwind Play CDN en el navegador (ver INFORME, punto "build").
+      Si algo deja de funcionar, el error aparece en la consola indicando que directiva
+      lo bloqueo; agregar ese origen aca (no borrar la politica entera).
+    -->
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://www.gstatic.com;
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      font-src 'self' data: https://fonts.gstatic.com;
+      img-src 'self' data: blob: https://firebasestorage.googleapis.com https://storage.googleapis.com https://*.googleusercontent.com;
+      connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.workers.dev;
+      worker-src 'self' blob:;
+      manifest-src 'self';
+      object-src 'none';
+      base-uri 'self';
+      form-action 'self';
+      upgrade-insecure-requests;
+    ">
+
     <title>FERNI - Sistema de Incidencias</title>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
-    
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
-    
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone@7.26.4/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Precarga de conexiones a los origenes criticos (arranque mas rapido) -->
+    <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!--
+      Todas las dependencias con version EXACTA + Subresource Integrity (SRI).
+      Antes: "react@18" (version flotante) y unpkg sin integrity => si el CDN sirve
+      un archivo alterado, el navegador lo ejecuta igual. Con integrity, el navegador
+      lo rechaza. Si en el futuro se sube de version hay que recalcular el hash:
+        curl -s <url> | openssl dgst -sha384 -binary | openssl base64 -A
+    -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"
+            integrity="sha384-yuGdyIzzYtOBlBG6JOWn+Ey9kpq7HocusNuxEGyyohr1eEyXpeEyehIIXC/hznw4"
+            crossorigin="anonymous"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"
+            integrity="sha384-lI+CxEx/bCvWP1b0OK13j5HTrTZP7yf1xle8TVOFq2smz6KC1RChTarRV/RHP5PP"
+            crossorigin="anonymous"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"
+            integrity="sha384-nwX2Qpkhc2sv6L0ZPkLefLGguao67toSowvePuQvGF6cG+8MUphGI2uI94Ls3JF7"
+            crossorigin="anonymous"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"
+            integrity="sha384-oze9siCpFoiDBZ37lLp99ZmOMO+je1s/xtvwtbNv3NXQXLpbpfPSzZSpbT3xV9da"
+            crossorigin="anonymous"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js"
+            integrity="sha384-DGyLxAyjq0f9SPpVevD6IgztCFlnMF6oW/XQGmfe+IsZ8TqEiDrcHkMLKI6fiB/Z"
+            crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js"
+            integrity="sha384-gTGxhz21lVGYNMcdJOyq01Edg0jhn/c22nsx0kyqP0TxaV5WVdsSH1fSDUf5YJj1"
+            crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.26.4/babel.min.js"
+            integrity="sha384-x/ilTFv/u/eu6YSmkFDZl5V5Mm/pkxxcVv2cVJOrr1J0rvILhMvRBCy6yA75wYBj"
+            crossorigin="anonymous"></script>
+    <script src="https://cdn.tailwindcss.com/3.4.16"
+            integrity="sha384-mS5Uq7sE90lgbBDN8xgf34ibEgbZo4gB3tfLY40ZRle+M188BQw8onzNHg6GUZaA"
+            crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
       *, *::before, *::after {
@@ -202,7 +261,9 @@
       ::-webkit-scrollbar-track { background: #0F0F0F; }
       ::-webkit-scrollbar-thumb { background: #2A2A2A; border-radius: 2px; }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"
+            integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g"
+            crossorigin="anonymous"></script>
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
@@ -212,6 +273,11 @@
     </script>
 </head>
 <body>
+    <noscript>
+      <div style="padding:24px;font-family:sans-serif;color:#F0EDE8;background:#0F0F0F">
+        Esta aplicacion necesita JavaScript activado para funcionar.
+      </div>
+    </noscript>
     <div id="root"></div>
 
     <script type="text/babel">
@@ -232,22 +298,100 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const storage = firebase.storage();
+        const auth = firebase.auth();
+
+        // Nota sobre la apiKey: en Firebase Web NO es un secreto (identifica al
+        // proyecto, no autoriza). Lo que realmente protege los datos son las
+        // Security Rules + Auth. Ver firestore.rules / storage.rules.
+        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
+
+        // ========================================
+        // AUTENTICACION
+        // ========================================
+        // Todo usuario (empleado, lider, encargado) obtiene una sesion ANONIMA de
+        // Firebase. Es lo que permite que las reglas exijan request.auth != null y
+        // que la base deje de estar abierta a cualquiera con la URL del proyecto.
+        const asegurarAuth = async () => {
+          if (auth.currentUser) return auth.currentUser;
+          try {
+            const cred = await auth.signInAnonymously();
+            return cred.user;
+          } catch (err) {
+            console.warn(
+              'No se pudo iniciar sesion anonima (' + (err.code || err.message) + '). ' +
+              'Activar Firebase Console > Authentication > Sign-in method > Anonymous.'
+            );
+            return null;
+          }
+        };
+
+        // Un usuario es admin SOLO si existe el documento admins/{uid} en Firestore.
+        // Nunca porque el localStorage o el codigo del cliente lo digan.
+        const obtenerPerfilAdmin = async (user) => {
+          if (!user || user.isAnonymous) return null;
+          try {
+            const doc = await db.collection('admins').doc(user.uid).get();
+            return doc.exists ? Object.assign({ uid: user.uid, email: user.email }, doc.data()) : null;
+          } catch (err) {
+            console.error('No se pudo verificar el perfil de admin:', err);
+            return null;
+          }
+        };
+
+        const mensajeAuthError = (err) => {
+          switch (err && err.code) {
+            case 'auth/invalid-email':          return 'El email no es valido.';
+            case 'auth/user-disabled':          return 'Este usuario esta deshabilitado.';
+            case 'auth/user-not-found':
+            case 'auth/wrong-password':
+            case 'auth/invalid-credential':     return 'Email o contrasena incorrectos.';
+            case 'auth/too-many-requests':      return 'Demasiados intentos. Espera unos minutos.';
+            case 'auth/network-request-failed': return 'Sin conexion. Revisa tu internet.';
+            case 'auth/operation-not-allowed':  return 'El acceso con email no esta habilitado en Firebase.';
+            default:                            return 'No se pudo iniciar sesion. Intenta de nuevo.';
+          }
+        };
+
+        // ========================================
+        // UTILIDADES DE SEGURIDAD
+        // ========================================
+        // 32 caracteres sin ambiguos (0/O, 1/I/L): 256 % 32 === 0, sin sesgo de modulo.
+        const ALFABETO_CODIGO = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        const tokenSeguro = (largo = 6) => {
+          const cr = window.crypto || window.msCrypto;
+          const buf = new Uint8Array(largo);
+          cr.getRandomValues(buf);
+          let out = '';
+          for (let i = 0; i < largo; i++) out += ALFABETO_CODIGO[buf[i] % 32];
+          return out;
+        };
+
+        const emailValido = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(v || '').trim());
+        const limpiarTexto = (v, max) => String(v == null ? '' : v).replace(/\s+$/, '').slice(0, max);
+        const abrirExterno = (url) => window.open(url, '_blank', 'noopener,noreferrer');
 
         // ========================================
         // CONSTANTES
         // ========================================
         const DIAS_RETENCION = 90;
-        
-        const ADMINS = [
-          { nombre: 'Lucas', email: 'lucas.ramirez2210@gmail.com', password: 'ferni2025' },
-          { nombre: 'Creyes', email: 'creyes@ferniplast.com', password: '_Ferni159' },
-          { nombre: 'Mparodi', email: 'mparodi@ferniplast.com', password: '_Ferni159' }
-        ];
+        const MAX_DESCRIPCION   = 1000;          // caracteres
+        const MAX_COMENTARIO    = 500;           // caracteres
+        const MAX_ARCHIVO_BYTES = 20 * 1024 * 1024;   // 20 MB de entrada
+        const MAX_BASE64_BYTES  = 800 * 1024;    // margen bajo el limite de 1 MB por doc de Firestore
+        const LIMITE_REPORTES   = 300;           // tope de documentos escuchados en vivo
+        const SESSION_TTL_MS    = 12 * 60 * 60 * 1000;  // la sesion local caduca a las 12 h
+        const LIMPIEZA_MIN_MS   = 24 * 60 * 60 * 1000;  // limpieza de fotos: 1 vez por dia
+
+        // Los administradores YA NO viven en el codigo.
+        // Antes habia un array ADMINS con email + contrasena en texto plano dentro de
+        // este archivo: cualquiera que abriera "Ver codigo fuente" tenia las 3 claves.
+        // Ahora se crean en Firebase Console > Authentication (Email/Password) y se
+        // les da el rol creando el documento  admins/{uid}  en Firestore.
+        // Ver MIGRACION.md.
 
         // App exclusiva FERNI 3
         const SUCURSAL_ID = 'F3';
         const SUCURSAL_NOMBRE = 'FERNI 3';
-        const GERENTES = { 'gerenteferni3': 'F3' };
         // Array para compatibilidad con SUCURSALES.find() existente
         const SUCURSALES = [{ id: 'F3', nombre: 'FERNI 3' }];
 
@@ -317,7 +461,14 @@
         // ========================================
         // COMPRIMIR FOTO
         // ========================================
-        const comprimirFoto = (file, maxWidth = 800, quality = 0.7) => {
+        const validarArchivoImagen = (file) => {
+          if (!file) return 'No se selecciono ninguna foto.';
+          if (!/^image\//.test(file.type || '')) return 'El archivo debe ser una imagen.';
+          if (file.size > MAX_ARCHIVO_BYTES) return 'La imagen supera los 20 MB.';
+          return null;
+        };
+
+        const comprimirFoto = (file, maxWidth = 1280, quality = 0.72) => {
           return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -348,6 +499,22 @@
             reader.onerror = () => reject(new Error('Error al leer archivo'));
             reader.readAsDataURL(file);
           });
+        };
+
+        // Si Storage falla se guarda la foto como base64 DENTRO del documento de
+        // Firestore, que tiene un limite duro de 1 MB. Antes no se controlaba: con una
+        // foto grande el guardado fallaba (o inflaba el documento y con el la descarga
+        // de TODOS los clientes). Aca se recomprime hasta entrar en el limite.
+        const comprimirHastaLimite = async (file, limite = MAX_BASE64_BYTES) => {
+          let ancho = 1280, calidad = 0.72;
+          for (let intento = 0; intento < 5; intento++) {
+            const comprimida = await comprimirFoto(file, ancho, calidad);
+            const b64 = await fileToBase64(comprimida);
+            if (b64.length <= limite) return b64;
+            ancho = Math.round(ancho * 0.75);
+            calidad = Math.max(0.35, calidad - 0.12);
+          }
+          return null;
         };
 
         // ========================================
@@ -385,8 +552,14 @@
           });
         };
         // ========================================
+        const LIMPIEZA_KEY = 'ferni_ultima_limpieza';
         const limpiarFotosViejas = async () => {
           try {
+            // Antes se recorria la coleccion entera cada vez que entraba un admin.
+            // Ahora, como maximo una vez cada 24 h por dispositivo.
+            const ultima = Number(localStorage.getItem(LIMPIEZA_KEY) || 0);
+            if (Date.now() - ultima < LIMPIEZA_MIN_MS) return;
+            localStorage.setItem(LIMPIEZA_KEY, String(Date.now()));
             console.log('🧹 Iniciando limpieza de fotos antiguas...');
             const fechaLimite = new Date();
             fechaLimite.setDate(fechaLimite.getDate() - DIAS_RETENCION);
@@ -426,20 +599,37 @@
         // COMPONENTE PRINCIPAL
         // ========================================
         const SESSION_KEY = 'ferni_session';
+        const SESSION_VERSION = 2;
 
         const guardarSesion = (datos) => {
-          localStorage.setItem(SESSION_KEY, JSON.stringify(datos));
+          try {
+            localStorage.setItem(SESSION_KEY, JSON.stringify(Object.assign({}, datos, {
+              v: SESSION_VERSION,
+              creadaEn: Date.now(),
+              expiraEn: Date.now() + SESSION_TTL_MS
+            })));
+          } catch (e) {
+            console.warn('No se pudo guardar la sesion local:', e);
+          }
         };
 
+        // IMPORTANTE: el localStorage lo edita cualquiera desde las devtools.
+        // Por eso al cargar se descartan los flags de privilegio: esAdmin/esGerente
+        // vuelven a otorgarse solo despues de revalidar contra Firebase Auth
+        // (ver el useEffect "revalidacion de permisos" en FerniApp).
         const cargarSesion = () => {
           try {
             const raw = localStorage.getItem(SESSION_KEY);
-            return raw ? JSON.parse(raw) : null;
+            if (!raw) return null;
+            const s = JSON.parse(raw);
+            if (!s || s.v !== SESSION_VERSION) { localStorage.removeItem(SESSION_KEY); return null; }
+            if (!s.expiraEn || Date.now() > s.expiraEn) { localStorage.removeItem(SESSION_KEY); return null; }
+            return Object.assign({}, s, { esAdmin: false, esGerente: false });
           } catch { return null; }
         };
 
         const borrarSesion = () => {
-          localStorage.removeItem(SESSION_KEY);
+          try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
         };
 
         // ========================================
@@ -447,10 +637,11 @@
         // ========================================
 
         // Genera un código de invitación único
+        // Antes: Math.random().toString(36).substring(2,6) => 4 caracteres, predecible
+        // y adivinable por fuerza bruta. Ahora: 8 caracteres de un CSPRNG.
         const generarCodigoInvitacion = (sucursalId, areaId) => {
           const sigArea = areaId.substring(0, 3).toUpperCase();
-          const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-          return `${sucursalId}-${sigArea}-${random}`;
+          return `${sucursalId}-${sigArea}-${tokenSeguro(8)}`;
         };
 
         // Genera franjas de 30 min entre apertura y cierre
@@ -481,182 +672,125 @@
           return nombre.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase();
         };
 
-        // ID de semana ISO actual (formato 2026-W18)
-        const obtenerSemanaActual = () => {
-          const ahora = new Date();
-          const anio = ahora.getFullYear();
-          const inicio = new Date(anio, 0, 1);
-          const dias = Math.floor((ahora - inicio) / (24 * 60 * 60 * 1000));
-          const semana = Math.ceil((dias + inicio.getDay() + 1) / 7);
+        // ID de semana ISO-8601 real (formato 2026-W18).
+        // La version anterior dependia del dia de la semana del 1 de enero y se
+        // desfasaba una semana en los cambios de anio.
+        const obtenerSemanaActual = (base) => {
+          const d = new Date(base || Date.now());
+          d.setHours(0, 0, 0, 0);
+          // Jueves de la semana ISO a la que pertenece la fecha
+          d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
+          const anio = d.getFullYear();
+          const primerJueves = new Date(anio, 0, 4);
+          primerJueves.setHours(0, 0, 0, 0);
+          primerJueves.setDate(primerJueves.getDate() + 3 - ((primerJueves.getDay() + 6) % 7));
+          const semana = 1 + Math.round((d - primerJueves) / (7 * 24 * 60 * 60 * 1000));
           return `${anio}-W${String(semana).padStart(2, '0')}`;
         };
 
-        function FerniApp() {
-          const sesionGuardada = cargarSesion();
-
-          const [vista, setVista] = useState(
-            sesionGuardada
-              ? (sesionGuardada.esLider ? 'horarios' : sesionGuardada.esEncargadoVencimientos ? 'vencimientos' : 'lista')
-              : 'login'
-          );
-          const [usuario, setUsuario] = useState(sesionGuardada?.usuario || null);
-          const [usuarioEmail, setUsuarioEmail] = useState(sesionGuardada?.usuarioEmail || null);
-          const [sucursalUsuario, setSucursalUsuario] = useState(sesionGuardada?.sucursalUsuario || null);
-          const [sucursalActiva, setSucursalActiva] = useState(sesionGuardada?.sucursalActiva || null);
-          const [esAdmin, setEsAdmin] = useState(sesionGuardada?.esAdmin || false);
-          const [esGerente, setEsGerente] = useState(sesionGuardada?.esGerente || false);
-          const [esLider, setEsLider] = useState(sesionGuardada?.esLider || false);
-          const [areaLider, setAreaLider] = useState(sesionGuardada?.areaLider || null);
-          const [esEncargadoVencimientos, setEsEncargadoVencimientos] = useState(sesionGuardada?.esEncargadoVencimientos || false);
-          const [rubroVto, setRubroVto] = useState(sesionGuardada?.rubroVto || null);
-          const [reportes, setReportes] = useState([]);
-          const [reportesNuevos, setReportesNuevos] = useState([]);
-          const [contadorNuevos, setContadorNuevos] = useState(0);
-          const [filtroEstado, setFiltroEstado] = useState('todos');
-          const [reporteActual, setReporteActual] = useState(null);
-          const [cargando, setCargando] = useState(false);
-          const [deepLinkId, setDeepLinkId] = useState(null);
-
-          // Detectar deep link al cargar
-          useEffect(() => {
-            const hash = window.location.hash;
-            const match = hash.match(/^#reporte-(.+)$/);
-            if (match) {
-              setDeepLinkId(match[1]);
-            }
-          }, []);
-
-          // Sincronizar reporteActual con el snapshot en tiempo real
-          useEffect(() => {
-            if (reporteActual) {
-              const actualizado = reportes.find(r => r.id === reporteActual.id);
-              if (actualizado) setReporteActual(actualizado);
-            }
-          }, [reportes]);
-
-          // Redirigir a deep link cuando llegan los reportes y el usuario ya está logueado
-          useEffect(() => {
-            if (deepLinkId && usuario && reportes.length > 0) {
-              const reporte = reportes.find(r => r.id === deepLinkId);
-              if (reporte) {
-                setReporteActual(reporte);
-                setVista('detalle');
-                setDeepLinkId(null); // limpiar para no volver a ejecutar
-                window.location.hash = ''; // limpiar la URL
-              }
-            }
-          }, [deepLinkId, usuario, reportes]);
-
-          // Limpieza automática (solo admins)
-          useEffect(() => {
-            if (esAdmin || esGerente) {
-              limpiarFotosViejas();
-            }
-          }, [esAdmin, esGerente]);
-
-          // Cargar reportes — sin orderBy en Firestore, ordenamos en JS
-          useEffect(() => {
-            if (!usuario || !sucursalActiva) return;
-            if (esLider) return; // Los líderes no necesitan reportes de incidencias
-
-            // Obtener timestamp de última visita
-            const ultimaVisitaKey = `ultimaVisita_${sucursalActiva}`;
-            const ultimaVisita = localStorage.getItem(ultimaVisitaKey);
-            const timestampUltimaVisita = ultimaVisita ? new Date(ultimaVisita) : new Date(0);
-
-            let query = db.collection('reportes');
-            query = query.where('sucursal', '==', SUCURSAL_ID);
-
-            let primeraVez = true;
-
-            const unsubscribe = query.onSnapshot((snapshot) => {
-              const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-              
-              // Ordenar por fecha_creacion DESC en JavaScript
-              data.sort((a, b) => {
-                const fa = getFecha(a.fecha_creacion) || new Date(0);
-                const fb = getFecha(b.fecha_creacion) || new Date(0);
-                return fb - fa;
-              });
-
-              // Contar reportes nuevos desde última visita
-              const nuevos = data.filter(r => {
-                const fecha = getFecha(r.fecha_creacion);
-                return fecha && fecha > timestampUltimaVisita;
-              });
-              setContadorNuevos(nuevos.length);
-
-              // Detectar reportes que acaban de llegar (solo después de primera carga)
-              if (!primeraVez) {
-                const idsAnteriores = new Set(reportes.map(r => r.id));
-                const recienLlegados = data.filter(r => !idsAnteriores.has(r.id)).map(r => r.id);
-                setReportesNuevos(recienLlegados);
-                // Quitar highlight después de 5 segundos
-                if (recienLlegados.length > 0) {
-                  setTimeout(() => setReportesNuevos([]), 5000);
-                }
-              }
-              primeraVez = false;
-
-              setReportes(data);
-            });
-
-            return () => unsubscribe();
-          }, [usuario, sucursalActiva]);
+        // ========================================
+        // CONTEXTO DE APLICACION
+        // ========================================
+        // Los componentes viven a nivel de modulo (no dentro de FerniApp) para que
+        // React conserve su identidad entre renders. Si se declaran adentro, cada
+        // render de FerniApp crea funciones nuevas y React DESMONTA y REMONTA todo:
+        // se pierde el foco del input, el texto a medio escribir, la foto elegida y
+        // el historial del asistente cada vez que llega un reporte nuevo por snapshot.
+        const AppCtx = React.createContext(null);
+        const useApp = () => React.useContext(AppCtx);
 
           // ========================================
           // LOGIN
           // ========================================
           const VistaLogin = () => {
+            const { setVista, setUsuario, setUsuarioEmail, setSucursalUsuario, setSucursalActiva, setEsAdmin, setEsGerente, setEsLider, setAreaLider, setEsEncargadoVencimientos, setRubroVto } = useApp();
             const [tipoLogin, setTipoLogin] = useState('empleado');
             const [nombre, setNombre] = useState('');
             const [sucursal, setSucursal] = useState('');
             const [email, setEmail] = useState('');
             const [password, setPassword] = useState('');
             const [codigoInvitacion, setCodigoInvitacion] = useState('');
+            const [errorEmpleado, setErrorEmpleado] = useState('');
+            const [errorAdmin, setErrorAdmin] = useState('');
+            const [cargandoAdmin, setCargandoAdmin] = useState(false);
             const [errorCodigo, setErrorCodigo] = useState('');
             const [invitacionValida, setInvitacionValida] = useState(null);
             const [nombreLider, setNombreLider] = useState('');
 
-            const handleLoginEmpleado = () => {
-              if (!nombre.trim() || !email.trim()) { alert('Completá nombre y email'); return; }
+            const handleLoginEmpleado = async () => {
+              const nom = limpiarTexto(nombre, 80).trim();
               const emailLower = email.trim().toLowerCase();
-              const esGte = !!GERENTES[emailLower];
+              if (nom.length < 3) { setErrorEmpleado('Ingresá tu nombre y apellido.'); return; }
+              if (!emailValido(emailLower)) { setErrorEmpleado('Ingresá un email válido.'); return; }
+              setErrorEmpleado('');
+              // Sesion anonima de Firebase: sin esto las reglas no pueden distinguir
+              // a la app de cualquier otro cliente.
+              await asegurarAuth();
+              // Ya NO existe la escalada por email: antes, escribir "gerenteferni3"
+              // en el campo de email otorgaba permisos de admin y gerente sin
+              // ninguna contraseña. Ahora el acceso admin va sólo por la pestaña Admin.
               const sesion = {
-                usuario: nombre.trim(),
+                usuario: nom,
                 usuarioEmail: emailLower,
                 sucursalUsuario: SUCURSAL_ID,
                 sucursalActiva: SUCURSAL_ID,
-                esAdmin: esGte,
-                esGerente: esGte
+                esAdmin: false,
+                esGerente: false
               };
               guardarSesion(sesion);
               setUsuario(sesion.usuario);
               setUsuarioEmail(sesion.usuarioEmail);
               setSucursalUsuario(SUCURSAL_ID);
               setSucursalActiva(SUCURSAL_ID);
-              setEsAdmin(esGte);
-              setEsGerente(esGte);
+              setEsAdmin(false);
+              setEsGerente(false);
               setVista('lista');
             };
 
-            const handleLoginAdmin = () => {
-              if (!email.trim() || !password.trim()) { alert('Completá email y contraseña'); return; }
-              const admin = ADMINS.find(a => a.email === email && a.password === password);
-              if (!admin) { alert('❌ Email o contraseña incorrectos'); return; }
-              const sesion = { usuario: admin.nombre, usuarioEmail: email.trim().toLowerCase(), sucursalUsuario: SUCURSAL_ID, sucursalActiva: SUCURSAL_ID, esAdmin: true, esGerente: true };
-              guardarSesion(sesion);
-              setUsuario(sesion.usuario);
-              setUsuarioEmail(sesion.usuarioEmail);
-              setSucursalUsuario(SUCURSAL_ID);
-              setSucursalActiva(SUCURSAL_ID);
-              setEsAdmin(true);
-              setEsGerente(true);
-              setVista('lista');
+            // Login de administrador contra Firebase Authentication.
+            // El rol se confirma leyendo admins/{uid} en Firestore: la contraseña ya
+            // no vive en este archivo y el navegador no puede otorgarse el rol solo.
+            const handleLoginAdmin = async () => {
+              const mail = email.trim().toLowerCase();
+              if (!emailValido(mail) || !password) { setErrorAdmin('Completá email y contraseña.'); return; }
+              setErrorAdmin('');
+              setCargandoAdmin(true);
+              try {
+                const cred = await auth.signInWithEmailAndPassword(mail, password);
+                const perfil = await obtenerPerfilAdmin(cred.user);
+                if (!perfil) {
+                  await auth.signOut();
+                  setErrorAdmin('Este usuario no tiene permisos de administrador.');
+                  return;
+                }
+                const sesion = {
+                  usuario: perfil.nombre || cred.user.email,
+                  usuarioEmail: cred.user.email,
+                  uid: cred.user.uid,
+                  sucursalUsuario: SUCURSAL_ID,
+                  sucursalActiva: SUCURSAL_ID,
+                  esAdmin: true,
+                  esGerente: true
+                };
+                guardarSesion(sesion);
+                setUsuario(sesion.usuario);
+                setUsuarioEmail(sesion.usuarioEmail);
+                setSucursalUsuario(SUCURSAL_ID);
+                setSucursalActiva(SUCURSAL_ID);
+                setEsAdmin(true);
+                setEsGerente(true);
+                setVista('lista');
+              } catch (err) {
+                console.error('Login admin:', err);
+                setErrorAdmin(mensajeAuthError(err));
+              } finally {
+                setCargandoAdmin(false);
+              }
             };
 
             const handleValidarCodigo = async () => {
               setErrorCodigo('');
+              await asegurarAuth();
               const codigo = codigoInvitacion.toUpperCase().trim();
               if (!codigo) { setErrorCodigo('Ingresá el código'); return; }
               try {
@@ -675,6 +809,7 @@
 
             const handleCrearCuentaLider = async () => {
               if (!nombreLider.trim()) { setErrorCodigo('Ingresá tu nombre'); return; }
+              await asegurarAuth();
               try {
                 // Marcar invitación como usada
                 await db.collection('horarios_invitaciones').doc(invitacionValida.codigo).update({
@@ -719,6 +854,7 @@
               setErrorVto('');
               if (!nombreVto.trim() || !codigoVto.trim()) { setErrorVto('Completá tu nombre y el código'); return; }
               setCargandoVtoLogin(true);
+              await asegurarAuth();
               try {
                 const codigo = codigoVto.toUpperCase().trim();
                 const doc = await db.collection('vencimientos_invitaciones').doc(codigo).get();
@@ -780,8 +916,9 @@
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Tu email</label>
-                        <input type="email" placeholder="tu.email@ejemplo.com" value={email} onChange={(e) => setEmail(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleLoginEmpleado()} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none" />
+                        <input type="email" inputMode="email" autoComplete="email" placeholder="tu.email@ejemplo.com" value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleLoginEmpleado()} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none" />
                       </div>
+                      {errorEmpleado && <div role="alert" className="text-red-600 text-sm text-center">{errorEmpleado}</div>}
                       <button onClick={handleLoginEmpleado} className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition">Ingresar</button>
                     </div>
                   )}
@@ -790,13 +927,14 @@
                     <div className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                        <input type="email" placeholder="admin@ferni.com" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none" />
+                        <input type="email" inputMode="email" autoComplete="username" placeholder="admin@ferni.com" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none" />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Contraseña</label>
-                        <input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleLoginAdmin()} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none" />
+                        <input type="password" autoComplete="current-password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleLoginAdmin()} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none" />
                       </div>
-                      <button onClick={handleLoginAdmin} className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition">Ingresar como Admin</button>
+                      {errorAdmin && <div role="alert" className="text-red-600 text-sm text-center">{errorAdmin}</div>}
+                      <button onClick={handleLoginAdmin} disabled={cargandoAdmin} className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-60">{cargandoAdmin ? 'Verificando...' : 'Ingresar como Admin'}</button>
                     </div>
                   )}
 
@@ -862,6 +1000,7 @@
             );
           };
           const VistaLista = () => {
+            const { vista, setVista, usuario, sucursalActiva, esAdmin, reportes, reportesNuevos, contadorNuevos, setContadorNuevos, filtroEstado, setFiltroEstado, setReporteActual, cerrarSesionTotal } = useApp();
             const reportesFiltrados = reportes.filter(r => filtroEstado === 'todos' || r.estado === filtroEstado);
             const sucursalNombre = SUCURSAL_NOMBRE;
 
@@ -906,7 +1045,7 @@
                       </div>
                       <div style={{ fontSize: 13, opacity: 0.7, marginTop: 2 }}>Hola, {usuario} {esAdmin && '👑'}</div>
                     </div>
-                    <button onClick={() => { borrarSesion(); setUsuario(null); setUsuarioEmail(null); setSucursalUsuario(null); setSucursalActiva(null); setEsAdmin(false); setEsGerente(false); setEsLider(false); setAreaLider(null); setEsEncargadoVencimientos(false); setRubroVto(null); setReportes([]); setVista('login'); }} style={{ fontSize: 12, opacity: 0.6, background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}>Salir</button>
+                    <button onClick={cerrarSesionTotal} style={{ fontSize: 12, opacity: 0.6, background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}>Salir</button>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginTop: 14 }}>
                     {[
@@ -989,6 +1128,7 @@
           // CREAR REPORTE
           // ========================================
           const VistaCrear = () => {
+            const { setVista, usuario, usuarioEmail, cargando, setCargando } = useApp();
             const [categoria, setCategoria] = useState('');
             const [descripcion, setDescripcion] = useState('');
             const [foto, setFoto] = useState(null);
@@ -996,34 +1136,41 @@
 
             const handleFotoChange = async (e) => {
               const file = e.target.files[0];
-              if (file) {
-                try {
-                  const fotoComprimida = await comprimirFoto(file);
-                  setFoto(fotoComprimida);
-                  const reader = new FileReader();
-                  reader.onload = (e) => setPrevisualizacion(e.target.result);
-                  reader.readAsDataURL(fotoComprimida);
-                } catch (error) {
-                  console.error('Error al comprimir foto:', error);
-                  alert('Error al procesar la foto');
-                }
+              if (!file) return;
+              const problema = validarArchivoImagen(file);
+              if (problema) { alert(problema); e.target.value = ''; return; }
+              try {
+                const fotoComprimida = await comprimirFoto(file);
+                setFoto(fotoComprimida);
+                const reader = new FileReader();
+                reader.onload = (ev) => setPrevisualizacion(ev.target.result);
+                reader.readAsDataURL(fotoComprimida);
+              } catch (error) {
+                console.error('Error al comprimir foto:', error);
+                alert('Error al procesar la foto');
               }
             };
 
             const handleCrear = async () => {
-              if (!categoria || !descripcion || !foto) { alert('Completá todos los campos'); return; }
+              const desc = limpiarTexto(descripcion, MAX_DESCRIPCION).trim();
+              if (!categoria || !desc || !foto) { alert('Completá todos los campos'); return; }
+              if (!CATEGORIAS.some(c => c.id === categoria)) { alert('Categoría inválida'); return; }
               setCargando(true);
               try {
-                // Intentar Storage; si falla, usar base64
+                // Intentar Storage; si falla, usar base64 acotado al límite del documento
                 let fotoGuardar = await subirFoto(foto, 'reportes');
                 if (!fotoGuardar) {
                   console.log('📦 Guardando foto como base64...');
-                  fotoGuardar = await fileToBase64(foto);
+                  fotoGuardar = await comprimirHastaLimite(foto);
+                  if (!fotoGuardar) {
+                    alert('No se pudo guardar la foto: es demasiado pesada y Storage no está disponible. Probá con otra foto o revisá tu conexión.');
+                    return;
+                  }
                 }
 
                 await db.collection('reportes').add({
                   categoria,
-                  descripcion,
+                  descripcion: desc,
                   foto_problema: fotoGuardar,
                   foto_solucion: null,
                   usuario_reporta: usuario,
@@ -1080,7 +1227,8 @@
 
                   <div>
                     <label className="block font-semibold mb-2" style={{ color: '#F0EDE8' }}>Descripción</label>
-                    <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} placeholder="Describí el problema..." className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none" rows="4" />
+                    <textarea value={descripcion} maxLength={MAX_DESCRIPCION} onChange={(e) => setDescripcion(e.target.value)} placeholder="Describí el problema..." className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none" rows="4" />
+                    <div className="text-right text-xs mt-1" style={{ color: '#666660' }}>{descripcion.length}/{MAX_DESCRIPCION}</div>
                   </div>
 
                   <div>
@@ -1110,27 +1258,32 @@
           // DETALLE DE REPORTE
           // ========================================
           const VistaDetalle = () => {
-            if (!reporteActual) return null;
-
-            const categoria = CATEGORIAS.find(c => c.id === reporteActual.categoria);
-            const sucursal = SUCURSALES.find(s => s.id === reporteActual.sucursal);
+            const { setVista, usuario, usuarioEmail, cargando, setCargando, esAdmin, esGerente, reporteActual } = useApp();
+            // Los hooks van SIEMPRE antes de cualquier return condicional: si no,
+            // React cambia el orden de hooks entre renders y rompe el componente.
             const [fotoSolucion, setFotoSolucion] = useState(null);
             const [previsualizacionSolucion, setPrevisualizacionSolucion] = useState(null);
             const [nuevoComentario, setNuevoComentario] = useState('');
 
+            if (!reporteActual) return null;
+
+            const categoria = CATEGORIAS.find(c => c.id === reporteActual.categoria);
+            const sucursal = SUCURSALES.find(s => s.id === reporteActual.sucursal);
+
             const handleFotoSolucionChange = async (e) => {
               const file = e.target.files[0];
-              if (file) {
-                try {
-                  const fotoComprimida = await comprimirFoto(file);
-                  setFotoSolucion(fotoComprimida);
-                  const reader = new FileReader();
-                  reader.onload = (e) => setPrevisualizacionSolucion(e.target.result);
-                  reader.readAsDataURL(fotoComprimida);
-                } catch (error) {
-                  console.error('Error al comprimir foto:', error);
-                  alert('Error al procesar la foto');
-                }
+              if (!file) return;
+              const problema = validarArchivoImagen(file);
+              if (problema) { alert(problema); e.target.value = ''; return; }
+              try {
+                const fotoComprimida = await comprimirFoto(file);
+                setFotoSolucion(fotoComprimida);
+                const reader = new FileReader();
+                reader.onload = (ev) => setPrevisualizacionSolucion(ev.target.result);
+                reader.readAsDataURL(fotoComprimida);
+              } catch (error) {
+                console.error('Error al comprimir foto:', error);
+                alert('Error al procesar la foto');
               }
             };
 
@@ -1142,7 +1295,11 @@
                 let fotoGuardar = await subirFoto(fotoSolucion, 'soluciones');
                 if (!fotoGuardar) {
                   console.log('📦 Guardando foto solución como base64...');
-                  fotoGuardar = await fileToBase64(fotoSolucion);
+                  fotoGuardar = await comprimirHastaLimite(fotoSolucion);
+                  if (!fotoGuardar) {
+                    alert('No se pudo guardar la foto: es demasiado pesada y Storage no está disponible.');
+                    return;
+                  }
                 }
 
                 await db.collection('reportes').doc(reporteActual.id).update({
@@ -1184,15 +1341,19 @@
             };
 
             const handleAgregarComentario = async () => {
-              if (!nuevoComentario.trim()) return;
+              const texto = limpiarTexto(nuevoComentario, MAX_COMENTARIO).trim();
+              if (!texto) return;
               try {
-                const comentariosActuales = reporteActual.comentarios || [];
+                // arrayUnion en vez de leer-y-reescribir el array completo: si dos
+                // personas comentan al mismo tiempo, antes uno de los comentarios
+                // se perdia silenciosamente.
                 await db.collection('reportes').doc(reporteActual.id).update({
-                  comentarios: [...comentariosActuales, {
+                  comentarios: firebase.firestore.FieldValue.arrayUnion({
                     usuario: usuario,
-                    texto: nuevoComentario.trim(),
+                    usuario_email: usuarioEmail || null,
+                    texto: texto,
                     fecha: new Date()
-                  }]
+                  })
                 });
                 setNuevoComentario('');
               } catch (error) {
@@ -1237,7 +1398,7 @@
                         const sucursalNombre = SUCURSAL_NOMBRE;
                         const catNombre = CATEGORIAS.find(c => c.id === reporteActual.categoria);
                         const texto = `${estado} — ${catNombre?.icon || ''} ${catNombre?.nombre || reporteActual.categoria}\n📍 ${sucursalNombre}\n👤 Reportado por: ${reporteActual.usuario_reporta}\n📝 ${reporteActual.descripcion}\n🕐 ${formatFecha(reporteActual.fecha_creacion)}\n\n🔗 Ver reporte: ${link}`;
-                        window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
+                        abrirExterno(`https://wa.me/?text=${encodeURIComponent(texto)}`);
                       }}
                       className="w-full flex items-center justify-center gap-3 py-3 rounded-lg font-semibold"
                       style={{ backgroundColor: '#25D366', color: '#fff' }}
@@ -1364,7 +1525,164 @@
           // ========================================
           // DASHBOARD
           // ========================================
+          // Panel de Analisis Inteligente (extraido de una IIFE con hooks adentro)
+          const PanelAnalisis = ({ reportesFiltrados, getTextoPeriodo }) => {
+                    const generarAnalisis = () => {
+                      if (reportesFiltrados.length === 0) return null;
+
+                      const totalR = reportesFiltrados.length;
+                      const abiertosR = reportesFiltrados.filter(r => r.estado === 'abierto');
+                      const resueltosR = reportesFiltrados.filter(r => r.estado === 'resuelto');
+                      const tasaRes = totalR > 0 ? Math.round((resueltosR.length / totalR) * 100) : 0;
+
+                      const catAbiertos = {};
+                      abiertosR.forEach(r => { catAbiertos[r.categoria] = (catAbiertos[r.categoria] || 0) + 1; });
+                      const catCriticaId = Object.entries(catAbiertos).sort((a, b) => b[1] - a[1])[0];
+                      const catCritica = catCriticaId ? CATEGORIAS.find(c => c.id === catCriticaId[0]) : null;
+
+                      const catTasas = CATEGORIAS.map(cat => {
+                        const rep = reportesFiltrados.filter(r => r.categoria === cat.id);
+                        const res = rep.filter(r => r.estado === 'resuelto').length;
+                        return { ...cat, total: rep.length, resueltos: res, tasa: rep.length > 0 ? Math.round((res / rep.length) * 100) : 100 };
+                      }).filter(c => c.total >= 2).sort((a, b) => a.tasa - b.tasa);
+                      const peorCategoria = catTasas.length > 0 ? catTasas[0] : null;
+
+                      const tiempos = resueltosR.map(r => {
+                        const fc = getFecha(r.fecha_creacion);
+                        const fr = getFecha(r.fecha_resolucion);
+                        if (fc && fr) return (fr - fc) / (1000 * 60 * 60);
+                        return null;
+                      }).filter(t => t !== null && t >= 0);
+                      const tiempoPromedio = tiempos.length > 0 ? Math.round(tiempos.reduce((a, b) => a + b, 0) / tiempos.length) : null;
+
+                      const resolvedoresCount = {};
+                      resueltosR.forEach(r => {
+                        const key = r.usuario_resuelve_email || r.usuario_resuelve;
+                        const name = r.usuario_resuelve;
+                        if (key && name) {
+                          if (!resolvedoresCount[key]) resolvedoresCount[key] = { nombre: name, count: 0 };
+                          resolvedoresCount[key].count++;
+                        }
+                      });
+                      const topResolvedor = Object.values(resolvedoresCount).sort((a, b) => b.count - a.count)[0];
+
+                      const mitad = Math.floor(reportesFiltrados.length / 2);
+                      const primeraM = reportesFiltrados.slice(mitad);
+                      const segundaM = reportesFiltrados.slice(0, mitad);
+                      const tasaPrimera = primeraM.length > 0 ? primeraM.filter(r => r.estado === 'resuelto').length / primeraM.length : 0;
+                      const tasaSegunda = segundaM.length > 0 ? segundaM.filter(r => r.estado === 'resuelto').length / segundaM.length : 0;
+                      const tendencia = tasaSegunda > tasaPrimera + 0.05 ? 'mejorando' : tasaSegunda < tasaPrimera - 0.05 ? 'empeorando' : 'estable';
+
+                      let sucCritica = null;
+                      if (false) { // multi-sucursal desactivado
+                        const sucStats = SUCURSALES.map(suc => {
+                          const rep = reportesFiltrados.filter(r => r.sucursal === suc.id);
+                          const ab = rep.filter(r => r.estado === 'abierto').length;
+                          return { ...suc, abiertos: ab, total: rep.length };
+                        }).filter(s => s.total > 0).sort((a, b) => b.abiertos - a.abiertos);
+                        sucCritica = sucStats.length > 0 && sucStats[0].abiertos > 0 ? sucStats[0] : null;
+                      }
+
+                      const recomendaciones = [];
+
+                      if (tasaRes < 60) {
+                        recomendaciones.push({ tipo: 'alerta', texto: `La tasa de resolución es del ${tasaRes}%. Objetivo recomendado: 80%+. Considerar asignar responsables fijos por categoría.` });
+                      } else if (tasaRes >= 80) {
+                        recomendaciones.push({ tipo: 'exito', texto: `Excelente tasa de resolución del ${tasaRes}%. El equipo está respondiendo bien a las incidencias.` });
+                      } else {
+                        recomendaciones.push({ tipo: 'atencion', texto: `Tasa de resolución del ${tasaRes}%. Hay margen de mejora, el objetivo ideal es superar el 80%.` });
+                      }
+
+                      if (catCritica && catCriticaId[1] >= 3) {
+                        recomendaciones.push({ tipo: 'alerta', texto: `"${catCritica.icon} ${catCritica.nombre}" tiene ${catCriticaId[1]} incidencias abiertas. Recomendación: priorizar esta categoría esta semana.` });
+                      }
+
+                      if (peorCategoria && peorCategoria.tasa < 50) {
+                        recomendaciones.push({ tipo: 'atencion', texto: `"${peorCategoria.icon} ${peorCategoria.nombre}" tiene la tasa más baja (${peorCategoria.tasa}%). Revisar si hay bloqueos o falta de recursos.` });
+                      }
+
+                      if (tiempoPromedio !== null) {
+                        if (tiempoPromedio > 72) {
+                          recomendaciones.push({ tipo: 'alerta', texto: `Tiempo promedio de resolución: ${tiempoPromedio}hs (~${Math.round(tiempoPromedio/24)} días). Es alto. Definir SLAs por categoría puede mejorar esto.` });
+                        } else if (tiempoPromedio <= 24) {
+                          recomendaciones.push({ tipo: 'exito', texto: `Tiempo promedio de resolución: ${tiempoPromedio}hs. Respuesta rápida del equipo.` });
+                        } else {
+                          recomendaciones.push({ tipo: 'atencion', texto: `Tiempo promedio de resolución: ${tiempoPromedio}hs (~${Math.round(tiempoPromedio/24)} días). Aceptable, pero se puede mejorar.` });
+                        }
+                      }
+
+                      if (topResolvedor) {
+                        recomendaciones.push({ tipo: 'exito', texto: `${topResolvedor.nombre} lidera las resoluciones con ${topResolvedor.count} problemas resueltos. Reconocer su compromiso.` });
+                      }
+
+                      if (tendencia === 'mejorando') {
+                        recomendaciones.push({ tipo: 'exito', texto: 'Tendencia positiva: la tasa de resolución viene mejorando en el período reciente.' });
+                      } else if (tendencia === 'empeorando') {
+                        recomendaciones.push({ tipo: 'alerta', texto: 'Tendencia negativa: la tasa de resolución viene bajando. Revisar carga de trabajo y recursos.' });
+                      }
+
+                      if (sucCritica && sucCritica.abiertos >= 3) {
+                        recomendaciones.push({ tipo: 'atencion', texto: `${sucCritica.nombre} tiene ${sucCritica.abiertos} incidencias abiertas, más que otras sucursales. Requiere atención.` });
+                      }
+
+                      if (abiertosR.length === 0 && totalR > 0) {
+                        recomendaciones.push({ tipo: 'exito', texto: '¡No hay incidencias abiertas! Todas resueltas. Excelente trabajo del equipo.' });
+                      }
+
+                      return recomendaciones;
+                    };
+
+                    const [mostrarAnalisis, setMostrarAnalisis] = useState(false);
+                    const analisis = mostrarAnalisis ? generarAnalisis() : null;
+
+                    return (
+                      <div className="bg-white rounded-lg p-6 shadow">
+                        <button 
+                          onClick={() => setMostrarAnalisis(!mostrarAnalisis)}
+                          className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-4 rounded-lg font-semibold hover:from-purple-700 hover:to-indigo-700 transition flex items-center justify-center gap-3 text-lg"
+                        >
+                          <span className="text-2xl">🧠</span>
+                          {mostrarAnalisis ? 'Ocultar Análisis' : 'Generar Análisis Inteligente'}
+                        </button>
+                        
+                        {mostrarAnalisis && analisis && analisis.length > 0 && (
+                          <div className="mt-6 space-y-3">
+                            <h3 className="font-bold text-gray-800 text-lg mb-4">📋 Informe de Situación</h3>
+                            {analisis.map((item, idx) => (
+                              <div key={idx} className={`p-4 rounded-lg border-l-4 ${
+                                item.tipo === 'alerta' ? 'bg-red-50 border-red-500' :
+                                item.tipo === 'atencion' ? 'bg-yellow-50 border-yellow-500' :
+                                'bg-green-50 border-green-500'
+                              }`}>
+                                <div className="flex items-start gap-3">
+                                  <span className="text-xl mt-0.5">
+                                    {item.tipo === 'alerta' ? '🔴' : item.tipo === 'atencion' ? '🟡' : '🟢'}
+                                  </span>
+                                  <p className={`text-sm font-medium ${
+                                    item.tipo === 'alerta' ? 'text-red-800' :
+                                    item.tipo === 'atencion' ? 'text-yellow-800' :
+                                    'text-green-800'
+                                  }`}>{item.texto}</p>
+                                </div>
+                              </div>
+                            ))}
+                            <div className="text-xs text-gray-400 mt-4 text-center">
+                              Análisis generado sobre {reportesFiltrados.length} reportes • {getTextoPeriodo()}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {mostrarAnalisis && (!analisis || analisis.length === 0) && (
+                          <div className="mt-4 text-center text-gray-500 py-4">
+                            No hay suficientes datos para generar análisis en este período.
+                          </div>
+                        )}
+                      </div>
+                    );
+          };
+
           const VistaDashboard = () => {
+            const { setVista, esAdmin, esGerente, reportes, sucursalActiva } = useApp();
             // Estados para filtro de fechas
             const [filtroFecha, setFiltroFecha] = useState('todo'); // 'todo', 'semana', 'mes', 'mes_anterior', 'personalizado'
             const [fechaDesde, setFechaDesde] = useState('');
@@ -1717,160 +2035,7 @@
                   )}
 
                   {/* Análisis Inteligente - Solo admin y gerentes */}
-                  {(esAdmin || esGerente) && (() => {
-                    const generarAnalisis = () => {
-                      if (reportesFiltrados.length === 0) return null;
-
-                      const totalR = reportesFiltrados.length;
-                      const abiertosR = reportesFiltrados.filter(r => r.estado === 'abierto');
-                      const resueltosR = reportesFiltrados.filter(r => r.estado === 'resuelto');
-                      const tasaRes = totalR > 0 ? Math.round((resueltosR.length / totalR) * 100) : 0;
-
-                      const catAbiertos = {};
-                      abiertosR.forEach(r => { catAbiertos[r.categoria] = (catAbiertos[r.categoria] || 0) + 1; });
-                      const catCriticaId = Object.entries(catAbiertos).sort((a, b) => b[1] - a[1])[0];
-                      const catCritica = catCriticaId ? CATEGORIAS.find(c => c.id === catCriticaId[0]) : null;
-
-                      const catTasas = CATEGORIAS.map(cat => {
-                        const rep = reportesFiltrados.filter(r => r.categoria === cat.id);
-                        const res = rep.filter(r => r.estado === 'resuelto').length;
-                        return { ...cat, total: rep.length, resueltos: res, tasa: rep.length > 0 ? Math.round((res / rep.length) * 100) : 100 };
-                      }).filter(c => c.total >= 2).sort((a, b) => a.tasa - b.tasa);
-                      const peorCategoria = catTasas.length > 0 ? catTasas[0] : null;
-
-                      const tiempos = resueltosR.map(r => {
-                        const fc = getFecha(r.fecha_creacion);
-                        const fr = getFecha(r.fecha_resolucion);
-                        if (fc && fr) return (fr - fc) / (1000 * 60 * 60);
-                        return null;
-                      }).filter(t => t !== null && t >= 0);
-                      const tiempoPromedio = tiempos.length > 0 ? Math.round(tiempos.reduce((a, b) => a + b, 0) / tiempos.length) : null;
-
-                      const resolvedoresCount = {};
-                      resueltosR.forEach(r => {
-                        const key = r.usuario_resuelve_email || r.usuario_resuelve;
-                        const name = r.usuario_resuelve;
-                        if (key && name) {
-                          if (!resolvedoresCount[key]) resolvedoresCount[key] = { nombre: name, count: 0 };
-                          resolvedoresCount[key].count++;
-                        }
-                      });
-                      const topResolvedor = Object.values(resolvedoresCount).sort((a, b) => b.count - a.count)[0];
-
-                      const mitad = Math.floor(reportesFiltrados.length / 2);
-                      const primeraM = reportesFiltrados.slice(mitad);
-                      const segundaM = reportesFiltrados.slice(0, mitad);
-                      const tasaPrimera = primeraM.length > 0 ? primeraM.filter(r => r.estado === 'resuelto').length / primeraM.length : 0;
-                      const tasaSegunda = segundaM.length > 0 ? segundaM.filter(r => r.estado === 'resuelto').length / segundaM.length : 0;
-                      const tendencia = tasaSegunda > tasaPrimera + 0.05 ? 'mejorando' : tasaSegunda < tasaPrimera - 0.05 ? 'empeorando' : 'estable';
-
-                      let sucCritica = null;
-                      if (false) { // multi-sucursal desactivado
-                        const sucStats = SUCURSALES.map(suc => {
-                          const rep = reportesFiltrados.filter(r => r.sucursal === suc.id);
-                          const ab = rep.filter(r => r.estado === 'abierto').length;
-                          return { ...suc, abiertos: ab, total: rep.length };
-                        }).filter(s => s.total > 0).sort((a, b) => b.abiertos - a.abiertos);
-                        sucCritica = sucStats.length > 0 && sucStats[0].abiertos > 0 ? sucStats[0] : null;
-                      }
-
-                      const recomendaciones = [];
-
-                      if (tasaRes < 60) {
-                        recomendaciones.push({ tipo: 'alerta', texto: `La tasa de resolución es del ${tasaRes}%. Objetivo recomendado: 80%+. Considerar asignar responsables fijos por categoría.` });
-                      } else if (tasaRes >= 80) {
-                        recomendaciones.push({ tipo: 'exito', texto: `Excelente tasa de resolución del ${tasaRes}%. El equipo está respondiendo bien a las incidencias.` });
-                      } else {
-                        recomendaciones.push({ tipo: 'atencion', texto: `Tasa de resolución del ${tasaRes}%. Hay margen de mejora, el objetivo ideal es superar el 80%.` });
-                      }
-
-                      if (catCritica && catCriticaId[1] >= 3) {
-                        recomendaciones.push({ tipo: 'alerta', texto: `"${catCritica.icon} ${catCritica.nombre}" tiene ${catCriticaId[1]} incidencias abiertas. Recomendación: priorizar esta categoría esta semana.` });
-                      }
-
-                      if (peorCategoria && peorCategoria.tasa < 50) {
-                        recomendaciones.push({ tipo: 'atencion', texto: `"${peorCategoria.icon} ${peorCategoria.nombre}" tiene la tasa más baja (${peorCategoria.tasa}%). Revisar si hay bloqueos o falta de recursos.` });
-                      }
-
-                      if (tiempoPromedio !== null) {
-                        if (tiempoPromedio > 72) {
-                          recomendaciones.push({ tipo: 'alerta', texto: `Tiempo promedio de resolución: ${tiempoPromedio}hs (~${Math.round(tiempoPromedio/24)} días). Es alto. Definir SLAs por categoría puede mejorar esto.` });
-                        } else if (tiempoPromedio <= 24) {
-                          recomendaciones.push({ tipo: 'exito', texto: `Tiempo promedio de resolución: ${tiempoPromedio}hs. Respuesta rápida del equipo.` });
-                        } else {
-                          recomendaciones.push({ tipo: 'atencion', texto: `Tiempo promedio de resolución: ${tiempoPromedio}hs (~${Math.round(tiempoPromedio/24)} días). Aceptable, pero se puede mejorar.` });
-                        }
-                      }
-
-                      if (topResolvedor) {
-                        recomendaciones.push({ tipo: 'exito', texto: `${topResolvedor.nombre} lidera las resoluciones con ${topResolvedor.count} problemas resueltos. Reconocer su compromiso.` });
-                      }
-
-                      if (tendencia === 'mejorando') {
-                        recomendaciones.push({ tipo: 'exito', texto: 'Tendencia positiva: la tasa de resolución viene mejorando en el período reciente.' });
-                      } else if (tendencia === 'empeorando') {
-                        recomendaciones.push({ tipo: 'alerta', texto: 'Tendencia negativa: la tasa de resolución viene bajando. Revisar carga de trabajo y recursos.' });
-                      }
-
-                      if (sucCritica && sucCritica.abiertos >= 3) {
-                        recomendaciones.push({ tipo: 'atencion', texto: `${sucCritica.nombre} tiene ${sucCritica.abiertos} incidencias abiertas, más que otras sucursales. Requiere atención.` });
-                      }
-
-                      if (abiertosR.length === 0 && totalR > 0) {
-                        recomendaciones.push({ tipo: 'exito', texto: '¡No hay incidencias abiertas! Todas resueltas. Excelente trabajo del equipo.' });
-                      }
-
-                      return recomendaciones;
-                    };
-
-                    const [mostrarAnalisis, setMostrarAnalisis] = useState(false);
-                    const analisis = mostrarAnalisis ? generarAnalisis() : null;
-
-                    return (
-                      <div className="bg-white rounded-lg p-6 shadow">
-                        <button 
-                          onClick={() => setMostrarAnalisis(!mostrarAnalisis)}
-                          className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-4 rounded-lg font-semibold hover:from-purple-700 hover:to-indigo-700 transition flex items-center justify-center gap-3 text-lg"
-                        >
-                          <span className="text-2xl">🧠</span>
-                          {mostrarAnalisis ? 'Ocultar Análisis' : 'Generar Análisis Inteligente'}
-                        </button>
-                        
-                        {mostrarAnalisis && analisis && analisis.length > 0 && (
-                          <div className="mt-6 space-y-3">
-                            <h3 className="font-bold text-gray-800 text-lg mb-4">📋 Informe de Situación</h3>
-                            {analisis.map((item, idx) => (
-                              <div key={idx} className={`p-4 rounded-lg border-l-4 ${
-                                item.tipo === 'alerta' ? 'bg-red-50 border-red-500' :
-                                item.tipo === 'atencion' ? 'bg-yellow-50 border-yellow-500' :
-                                'bg-green-50 border-green-500'
-                              }`}>
-                                <div className="flex items-start gap-3">
-                                  <span className="text-xl mt-0.5">
-                                    {item.tipo === 'alerta' ? '🔴' : item.tipo === 'atencion' ? '🟡' : '🟢'}
-                                  </span>
-                                  <p className={`text-sm font-medium ${
-                                    item.tipo === 'alerta' ? 'text-red-800' :
-                                    item.tipo === 'atencion' ? 'text-yellow-800' :
-                                    'text-green-800'
-                                  }`}>{item.texto}</p>
-                                </div>
-                              </div>
-                            ))}
-                            <div className="text-xs text-gray-400 mt-4 text-center">
-                              Análisis generado sobre {reportesFiltrados.length} reportes • {getTextoPeriodo()}
-                            </div>
-                          </div>
-                        )}
-                        
-                        {mostrarAnalisis && (!analisis || analisis.length === 0) && (
-                          <div className="mt-4 text-center text-gray-500 py-4">
-                            No hay suficientes datos para generar análisis en este período.
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })()}
+                  {(esAdmin || esGerente) && <PanelAnalisis reportesFiltrados={reportesFiltrados} getTextoPeriodo={getTextoPeriodo} />}
                 </div>
               </div>
             );
@@ -1883,6 +2048,7 @@
           // VISTA ASISTENTE
           // ========================================
           const VistaAsistente = () => {
+            const { setVista, usuario, usuarioEmail, esAdmin, esGerente, sucursalActiva, sucursalUsuario } = useApp();
             const [mensajes, setMensajes] = useState([
               {
                 rol: 'asistente',
@@ -2088,6 +2254,7 @@
           };
 
           const VistaHorarios = () => {
+            const { setVista, usuario, sucursalActiva, esAdmin, esGerente, esLider, areaLider, cerrarSesionTotal } = useApp();
             const [vistaHor, setVistaHor] = useState('home'); // home | config | equipo | armar | tablero
             const [configHor, setConfigHor] = useState(null);
             const [colaboradores, setColaboradores] = useState([]);
@@ -2325,7 +2492,7 @@
                       <button onClick={volverAIncidencias} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: 'white', padding: '6px 12px', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>Inicio</button>
                     )}
                     {esLider && (
-                      <button onClick={() => { borrarSesion(); setUsuario(null); setUsuarioEmail(null); setSucursalUsuario(null); setSucursalActiva(null); setEsAdmin(false); setEsGerente(false); setEsLider(false); setAreaLider(null); setEsEncargadoVencimientos(false); setRubroVto(null); setReportes([]); setVista('login'); }} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: 'white', padding: '6px 12px', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>Salir</button>
+                      <button onClick={cerrarSesionTotal} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: 'white', padding: '6px 12px', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>Salir</button>
                     )}
                   </div>
                 </div>
@@ -2506,7 +2673,7 @@
                 `Tu código de invitación es: ${inv.codigo}\n\n` +
                 `Entrá a la app, elegí "🎟️ Código" y pegá ese código. Vence en 7 días.`
               );
-              window.open(`https://wa.me/?text=${mensaje}`, '_blank');
+              abrirExterno(`https://wa.me/?text=${mensaje}`);
             };
 
             return (
@@ -3328,6 +3495,7 @@
           // MÓDULO VENCIMIENTOS
           // ========================================
           const VistaVencimientos = () => {
+            const { setVista, usuario, esAdmin, esEncargadoVencimientos, rubroVto } = useApp();
             const puedeEditar = esAdmin || esEncargadoVencimientos;
             const sucursalVto = SUCURSAL_ID;
 
@@ -3399,7 +3567,7 @@
             }, [sucursalVto, esAdmin]);
 
             const generarInvitacionVto = async () => {
-              const sufijo = Math.random().toString(36).substring(2, 7).toUpperCase();
+              const sufijo = tokenSeguro(8);
               const rubroSufijo = rubroParaInvitar === 'todos' ? 'TODOS' : rubroParaInvitar.toUpperCase();
               const codigo = `VTO-${sucursalVto}-${rubroSufijo}-${sufijo}`;
               const nueva = {
@@ -3432,7 +3600,7 @@
                 `Tu código de acceso es: *${inv.codigo}*\n\n` +
                 `Entrá a la app FERNI, elegí "Vencimientos" en el login y usá ese código. Vence en 30 días.`
               );
-              window.open(`https://wa.me/?text=${mensaje}`, '_blank');
+              abrirExterno(`https://wa.me/?text=${mensaje}`);
             };
 
             const diasHasta = (vto) => Math.ceil((new Date(vto) - new Date()) / 86400000);
@@ -3865,6 +4033,7 @@
           // TAB BAR GLOBAL (visible en lista, dashboard, asistente)
           // ========================================
           const TabBar = () => {
+            const { vista, setVista, esLider, esEncargadoVencimientos } = useApp();
             const tabs = [
               { id: 'lista',        label: 'Inicio',     icon: '🏠' },
               { id: 'horarios',     label: 'Horarios',   icon: '📅' },
@@ -3883,7 +4052,7 @@
             if (!tabsActivos.includes(vista)) return null;
 
             return (
-              <div style={{
+              <nav aria-label="Navegación principal" style={{
                 position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100,
                 background: '#1A1A1A', borderTop: '1px solid #2A2A2A',
                 display: 'flex', justifyContent: 'space-around', alignItems: 'center',
@@ -3893,7 +4062,8 @@
                 {tabsVisibles.map(tab => {
                   const activo = vista === tab.id;
                   return (
-                    <button key={tab.id} onClick={() => setVista(tab.id)} style={{
+                    <button key={tab.id} type="button" onClick={() => setVista(tab.id)}
+                      aria-label={tab.label} aria-current={activo ? 'page' : undefined} style={{
                       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
                       background: 'none', border: 'none', cursor: 'pointer', padding: '4px 12px',
                       minWidth: 60, flex: 1
@@ -3904,27 +4074,238 @@
                     </button>
                   );
                 })}
-              </div>
+              </nav>
             );
           };
 
+
+        function FerniApp() {
+          const sesionGuardada = cargarSesion();
+
+          const [vista, setVista] = useState(
+            sesionGuardada
+              ? (sesionGuardada.esLider ? 'horarios' : sesionGuardada.esEncargadoVencimientos ? 'vencimientos' : 'lista')
+              : 'login'
+          );
+          const [usuario, setUsuario] = useState(sesionGuardada?.usuario || null);
+          const [usuarioEmail, setUsuarioEmail] = useState(sesionGuardada?.usuarioEmail || null);
+          const [sucursalUsuario, setSucursalUsuario] = useState(sesionGuardada?.sucursalUsuario || null);
+          const [sucursalActiva, setSucursalActiva] = useState(sesionGuardada?.sucursalActiva || null);
+          const [esAdmin, setEsAdmin] = useState(sesionGuardada?.esAdmin || false);
+          const [esGerente, setEsGerente] = useState(sesionGuardada?.esGerente || false);
+          const [esLider, setEsLider] = useState(sesionGuardada?.esLider || false);
+          const [areaLider, setAreaLider] = useState(sesionGuardada?.areaLider || null);
+          const [esEncargadoVencimientos, setEsEncargadoVencimientos] = useState(sesionGuardada?.esEncargadoVencimientos || false);
+          const [rubroVto, setRubroVto] = useState(sesionGuardada?.rubroVto || null);
+          const [reportes, setReportes] = useState([]);
+          const [reportesNuevos, setReportesNuevos] = useState([]);
+          const [contadorNuevos, setContadorNuevos] = useState(0);
+          const [filtroEstado, setFiltroEstado] = useState('todos');
+          const [reporteActual, setReporteActual] = useState(null);
+          const [cargando, setCargando] = useState(false);
+          const [deepLinkId, setDeepLinkId] = useState(null);
+
+          // Detectar deep link al cargar
+          useEffect(() => {
+            const hash = window.location.hash;
+            const match = hash.match(/^#reporte-([A-Za-z0-9_-]{1,64})$/);
+            if (match) {
+              setDeepLinkId(match[1]);
+            }
+          }, []);
+
+          // Sincronizar reporteActual con el snapshot en tiempo real
+          useEffect(() => {
+            if (reporteActual) {
+              const actualizado = reportes.find(r => r.id === reporteActual.id);
+              if (actualizado) setReporteActual(actualizado);
+            }
+          }, [reportes]);
+
+          // Redirigir a deep link cuando llegan los reportes y el usuario ya está logueado
+          useEffect(() => {
+            if (deepLinkId && usuario && reportes.length > 0) {
+              const reporte = reportes.find(r => r.id === deepLinkId);
+              if (reporte) {
+                setReporteActual(reporte);
+                setVista('detalle');
+                setDeepLinkId(null); // limpiar para no volver a ejecutar
+                window.location.hash = ''; // limpiar la URL
+              }
+            }
+          }, [deepLinkId, usuario, reportes]);
+
+          // Limpieza automática (solo admins)
+          useEffect(() => {
+            if (esAdmin || esGerente) {
+              limpiarFotosViejas();
+            }
+          }, [esAdmin, esGerente]);
+
+          // Espejo de `reportes` en un ref: el callback de onSnapshot se crea una sola
+          // vez y capturaba el valor inicial ([]), por lo que "reportes nuevos"
+          // marcaba TODA la lista como nueva en cada actualizacion.
+          const reportesRef = useRef([]);
+          useEffect(() => { reportesRef.current = reportes; }, [reportes]);
+
+          // Cargar reportes en vivo
+          useEffect(() => {
+            if (!usuario || !sucursalActiva) return;
+            if (esLider) return; // Los lideres no necesitan reportes de incidencias
+
+            const ultimaVisitaKey = `ultimaVisita_${sucursalActiva}`;
+            const ultimaVisita = localStorage.getItem(ultimaVisitaKey);
+            const timestampUltimaVisita = ultimaVisita ? new Date(ultimaVisita) : new Date(0);
+
+            let primeraVez = true;
+            let activo = true;
+            let unsubscribe = null;
+
+            const manejarSnapshot = (snapshot) => {
+              const data = snapshot.docs.map(doc => Object.assign({ id: doc.id }, doc.data()));
+
+              data.sort((a, b) => {
+                const fa = getFecha(a.fecha_creacion) || new Date(0);
+                const fb = getFecha(b.fecha_creacion) || new Date(0);
+                return fb - fa;
+              });
+
+              setContadorNuevos(data.filter(r => {
+                const fecha = getFecha(r.fecha_creacion);
+                return fecha && fecha > timestampUltimaVisita;
+              }).length);
+
+              if (!primeraVez) {
+                const idsAnteriores = new Set(reportesRef.current.map(r => r.id));
+                const recienLlegados = data.filter(r => !idsAnteriores.has(r.id)).map(r => r.id);
+                if (recienLlegados.length > 0) {
+                  setReportesNuevos(recienLlegados);
+                  setTimeout(() => { if (activo) setReportesNuevos([]); }, 5000);
+                }
+              }
+              primeraVez = false;
+              setReportes(data);
+            };
+
+            // Preferimos la consulta ordenada y acotada (menos datos, menos costo).
+            // Necesita un indice compuesto sucursal + fecha_creacion; si todavia no
+            // existe, Firestore devuelve 'failed-precondition' y caemos a la consulta
+            // simple de siempre en vez de dejar la pantalla vacia.
+            const suscribir = (conIndice) => {
+              let q = db.collection('reportes').where('sucursal', '==', SUCURSAL_ID);
+              if (conIndice) q = q.orderBy('fecha_creacion', 'desc').limit(LIMITE_REPORTES);
+              return q.onSnapshot(manejarSnapshot, (err) => {
+                if (conIndice && (err.code === 'failed-precondition' || err.code === 'invalid-argument')) {
+                  console.warn('Indice compuesto no disponible, uso consulta sin orden:', err.message);
+                  if (activo) unsubscribe = suscribir(false);
+                } else {
+                  console.error('Error al escuchar reportes:', err);
+                }
+              });
+            };
+
+            unsubscribe = suscribir(true);
+            return () => { activo = false; if (unsubscribe) unsubscribe(); };
+          }, [usuario, sucursalActiva, esLider]);
+
+          // Revalidacion de permisos: la unica fuente de verdad es Firebase Auth
+          // + el documento admins/{uid}. Nada de lo guardado en localStorage otorga
+          // privilegios por si solo.
+          useEffect(() => {
+            let cancelado = false;
+            const unsub = auth.onAuthStateChanged(async (user) => {
+              if (!user) { await asegurarAuth(); return; }
+              const perfil = await obtenerPerfilAdmin(user);
+              if (cancelado) return;
+              setEsAdmin(!!perfil);
+              setEsGerente(!!perfil);
+            });
+            return () => { cancelado = true; unsub(); };
+          }, []);
+
+          // Cierre de sesion unificado (tambien cierra la sesion de Firebase Auth)
+          const cerrarSesionTotal = async () => {
+            borrarSesion();
+            try { await auth.signOut(); } catch (e) { /* sin conexion */ }
+            setUsuario(null); setUsuarioEmail(null);
+            setSucursalUsuario(null); setSucursalActiva(null);
+            setEsAdmin(false); setEsGerente(false);
+            setEsLider(false); setAreaLider(null);
+            setEsEncargadoVencimientos(false); setRubroVto(null);
+            setReportes([]); setReporteActual(null);
+            setVista('login');
+            asegurarAuth();
+          };
+
+          const ctx = {
+            vista, setVista,
+            usuario, setUsuario,
+            usuarioEmail, setUsuarioEmail,
+            sucursalUsuario, setSucursalUsuario,
+            sucursalActiva, setSucursalActiva,
+            esAdmin, setEsAdmin,
+            esGerente, setEsGerente,
+            esLider, setEsLider,
+            areaLider, setAreaLider,
+            esEncargadoVencimientos, setEsEncargadoVencimientos,
+            rubroVto, setRubroVto,
+            reportes, setReportes,
+            reportesNuevos, setReportesNuevos,
+            contadorNuevos, setContadorNuevos,
+            filtroEstado, setFiltroEstado,
+            reporteActual, setReporteActual,
+            cargando, setCargando,
+            cerrarSesionTotal
+          };
+
           return (
-            <div>
-              {vista === 'login' && <VistaLogin />}
-              {vista === 'lista' && <VistaLista />}
-              {vista === 'crear' && <VistaCrear />}
-              {vista === 'detalle' && <VistaDetalle />}
-              {vista === 'dashboard' && <VistaDashboard />}
-              {vista === 'horarios' && <VistaHorarios />}
-              {vista === 'asistente' && <VistaAsistente />}
-              {vista === 'vencimientos' && <VistaVencimientos />}
-              <TabBar />
-            </div>
+            <AppCtx.Provider value={ctx}>
+              <div>
+                {vista === 'login' && <VistaLogin />}
+                {vista === 'lista' && <VistaLista />}
+                {vista === 'crear' && <VistaCrear />}
+                {vista === 'detalle' && <VistaDetalle />}
+                {vista === 'dashboard' && <VistaDashboard />}
+                {vista === 'horarios' && <VistaHorarios />}
+                {vista === 'asistente' && <VistaAsistente />}
+                {vista === 'vencimientos' && <VistaVencimientos />}
+                <TabBar />
+              </div>
+            </AppCtx.Provider>
           );
         }
 
+        // Evita la pantalla en blanco: si un componente lanza una excepcion, se
+        // muestra un aviso con boton de recarga en lugar de dejar el <div id="root"> vacio.
+        class ErrorBoundary extends React.Component {
+          constructor(props) { super(props); this.state = { error: null }; }
+          static getDerivedStateFromError(error) { return { error }; }
+          componentDidCatch(error, info) { console.error('Error no controlado en la UI:', error, info); }
+          render() {
+            if (!this.state.error) return this.props.children;
+            return (
+              <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center' }}>
+                <div>
+                  <div style={{ fontSize: 42, marginBottom: 12 }}>⚠️</div>
+                  <h1 style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>Algo salió mal</h1>
+                  <p style={{ fontSize: 13, opacity: 0.7, marginBottom: 18, maxWidth: 320 }}>
+                    La app se encontró con un error inesperado. Podés recargar y seguir trabajando.
+                  </p>
+                  <button type="button" onClick={() => window.location.reload()}
+                    style={{ background: '#F0EDE8', color: '#0F0F0F', border: 'none', borderRadius: 10, padding: '10px 20px', fontWeight: 600, cursor: 'pointer' }}>
+                    Recargar
+                  </button>
+                </div>
+              </div>
+            );
+          }
+        }
+
+        // Sesion anonima apenas arranca: asi la primera lectura ya viaja autenticada.
+        asegurarAuth();
+
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<FerniApp />);
+        root.render(<ErrorBoundary><FerniApp /></ErrorBoundary>);
     </script>
 
     <style>
