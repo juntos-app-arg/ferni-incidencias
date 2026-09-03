@@ -75,14 +75,16 @@
             integrity="sha384-x/ilTFv/u/eu6YSmkFDZl5V5Mm/pkxxcVv2cVJOrr1J0rvILhMvRBCy6yA75wYBj"
             crossorigin="anonymous"></script>
     <!--
-      Tailwind Play CDN: version fijada, pero SIN integrity/crossorigin a proposito.
+      Tailwind Play CDN: version fijada en 3.4.17, que es exactamente lo que servia
+      la URL sin version que usaba la app antes (mismos bytes), asi que la apariencia
+      no cambia. Va SIN integrity/crossorigin a proposito:
       cdn.tailwindcss.com no envia cabeceras CORS (Access-Control-Allow-Origin), y el
       SRI en un script de otro origen obliga a pedirlo en modo CORS: con integrity el
       navegador lo bloquea y la app se queda sin ningun estilo.
       La forma de proteger esta dependencia no es SRI sino sacarla: compilar el CSS de
       Tailwind en el build e incrustarlo (ver INFORME, punto "build").
     -->
-    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
       *, *::before, *::after {
