@@ -2,11 +2,18 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="FERNI 3">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <!--
+      "black-translucent" hacia que, instalada en el celular, la app se dibujara
+      DEBAJO de la barra de estado: el reloj y la bateria quedaban encima del
+      header y tapaban el boton de Volver. Con "black" el sistema reserva esa
+      franja (negra, igual que el fondo de la app) y el contenido arranca abajo.
+      Por el mismo motivo se saco viewport-fit=cover.
+    -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="theme-color" content="#0F0F0F">
     <meta name="description" content="Aplicacion interna de FERNI 3 para gestion de incidencias, horarios y vencimientos.">
     <!-- App interna: no debe aparecer en buscadores -->
@@ -263,6 +270,23 @@
         background-color: rgba(77,255,145,0.12) !important;
         color: #4DFF91 !important;
       }
+
+      /* ── ÁREAS SEGURAS (notch, barra de estado, barra de gestos) ──
+         Red de contención: si el sistema igual entrega el área insegura
+         (Android a pantalla completa, o si alguna vez se vuelve a poner
+         viewport-fit=cover), estas clases le suman el alto real de la barra
+         al padding que ya tenía cada header. Cuando no hay área insegura,
+         env() vale 0 y el padding queda exactamente como estaba. */
+      .hdr-6  { padding-top: calc(1.5rem + env(safe-area-inset-top, 0px)) !important; }
+      .hdr-4  { padding-top: calc(1rem   + env(safe-area-inset-top, 0px)) !important; }
+      .hdr-16 { padding-top: calc(16px   + env(safe-area-inset-top, 0px)) !important; }
+      .hdr-14 { padding-top: calc(14px   + env(safe-area-inset-top, 0px)) !important; }
+
+      /* Lo mismo abajo: la barra de pestañas y los botones flotantes no
+         pueden quedar debajo de la barra de gestos del teléfono. */
+      .fixed.bottom-6.right-6 { bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px)) !important; }
+      .fixed.bottom-20        { bottom: calc(5rem   + env(safe-area-inset-bottom, 0px)) !important; }
+      .fixed.bottom-16        { bottom: calc(4rem   + env(safe-area-inset-bottom, 0px)) !important; }
 
       /* ── SCROLLBAR ── */
       ::-webkit-scrollbar { width: 4px; }
@@ -902,7 +926,7 @@
             };
 
             return (
-              <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+              <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4 hdr-4">
                 <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
                   <div className="text-center mb-8">
                     <h1 className="text-3xl font-bold text-gray-800 mb-2">FERNI 3</h1>
@@ -1040,7 +1064,7 @@
             return (
               <div className="min-h-screen bg-gray-50">
                 {/* Header compacto */}
-                <div style={{ background: '#1E3A5F', color: 'white', padding: '16px 20px 12px' }}>
+                <div className="hdr-16" style={{ background: '#1E3A5F', color: 'white', padding: '16px 20px 12px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -1207,7 +1231,7 @@
 
             return (
               <div className="min-h-screen bg-gray-50">
-                <div className="bg-blue-600 text-white p-6">
+                <div className="bg-blue-600 text-white p-6 hdr-6">
                   <button onClick={() => setVista('lista')} className="mb-4 text-blue-100 hover:text-white">← Volver</button>
                   <h1 className="text-2xl font-bold">Nuevo Reporte</h1>
                   <p className="text-blue-100 text-sm mt-1">FERNI 3</p>
@@ -1372,7 +1396,7 @@
 
             return (
               <div className="min-h-screen bg-gray-50">
-                <div className="bg-blue-600 text-white p-6">
+                <div className="bg-blue-600 text-white p-6 hdr-6">
                   <button onClick={() => setVista('lista')} className="mb-4 text-blue-100 hover:text-white">← Volver</button>
                   <h1 className="text-2xl font-bold">Detalle del Reporte</h1>
                   {sucursal && <p className="text-blue-100 text-sm mt-1">📍 {sucursal.nombre}</p>}
@@ -1806,7 +1830,7 @@
 
             return (
               <div className="min-h-screen bg-gray-50 pb-20" id="dashboard-container">
-                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 no-print">
+                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 no-print hdr-6">
                   <div className="flex justify-between items-center mb-4">
                     <button onClick={() => setVista('lista')} className="text-blue-100 hover:text-white">← Volver</button>
                     <button 
@@ -2151,7 +2175,7 @@
 
             return (
               <div className="min-h-screen bg-gray-50 flex flex-col pb-20">
-                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 shadow-lg">
+                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 shadow-lg hdr-4">
                   <div className="flex items-center gap-3 mb-2">
                     <button onClick={() => setVista('lista')} className="text-blue-100 hover:text-white text-sm">
                       ← Volver
@@ -2434,7 +2458,7 @@
             // Error de carga
             if (errorHor && !configHor) {
               return (
-                <div className="min-h-screen bg-gray-900 text-gray-100 p-6">
+                <div className="min-h-screen bg-gray-900 text-gray-100 p-6 hdr-6">
                   <div className="max-w-md mx-auto bg-gray-800 rounded-2xl p-6 mt-12">
                     <div className="text-4xl text-center mb-4">⚠️</div>
                     <h2 className="text-xl font-bold mb-2 text-center">Error al cargar horarios</h2>
@@ -2456,7 +2480,7 @@
             // Sin configuración (empleado entrando antes de que el gerente configure)
             if (!configHor) {
               return (
-                <div className="min-h-screen bg-gray-900 text-gray-100 p-6">
+                <div className="min-h-screen bg-gray-900 text-gray-100 p-6 hdr-6">
                   <div className="max-w-md mx-auto bg-gray-800 rounded-2xl p-8 text-center mt-12">
                     <div className="text-5xl mb-4">📅</div>
                     <h2 className="text-xl font-bold mb-2">Módulo no configurado</h2>
@@ -2475,7 +2499,7 @@
             return (
               <div className="min-h-screen bg-gray-900 text-gray-100 pb-20">
                 {/* Header */}
-                <div style={{ background: '#1E3A5F', padding: '14px 16px', position: 'sticky', top: 0, zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div className="hdr-14" style={{ background: '#1E3A5F', padding: '14px 16px', position: 'sticky', top: 0, zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     {vistaHor !== 'home' && (
                       <button onClick={() => setVistaHor('home')} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: 'white', padding: '6px 12px', borderRadius: 8, fontSize: 13, cursor: 'pointer' }}>←</button>
@@ -3699,7 +3723,7 @@
             return (
               <div style={{ minHeight: '100vh', background: '#0F0F0F', fontFamily: 'Outfit, sans-serif', paddingBottom: 80 }}>
                 {/* Header */}
-                <div style={headerStyle}>
+                <div className="hdr-16" style={headerStyle}>
                   <div>
                     <div style={{ fontSize: 17, fontWeight: 600 }}>Vencimientos</div>
                     <div style={{ fontSize: 11, opacity: 0.6 }}>FERNI 3 · {esAdmin ? 'Admin' : esEncargadoVencimientos ? `Encargado · ${rubroVto === 'todos' ? 'Todos los rubros' : rubroInfo(rubroVto)?.nombre || 'Sin rubro asignado'}` : 'Solo lectura'}</div>
@@ -4064,7 +4088,7 @@
                 position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100,
                 background: '#1A1A1A', borderTop: '1px solid #2A2A2A',
                 display: 'flex', justifyContent: 'space-around', alignItems: 'center',
-                padding: '8px 0 12px',
+                padding: '8px 0 calc(12px + env(safe-area-inset-bottom, 0px))',
                 boxShadow: '0 -4px 20px rgba(0,0,0,0.4)'
               }}>
                 {tabsVisibles.map(tab => {
