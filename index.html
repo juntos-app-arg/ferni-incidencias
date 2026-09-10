@@ -451,7 +451,9 @@
         const MAX_ARCHIVO_BYTES = 20 * 1024 * 1024;   // 20 MB de entrada
         const MAX_BASE64_BYTES  = 800 * 1024;    // margen bajo el limite de 1 MB por doc de Firestore
         const LIMITE_REPORTES   = 300;           // tope de documentos escuchados en vivo
-        const SESSION_TTL_MS    = 12 * 60 * 60 * 1000;  // la sesion local caduca a las 12 h
+        const SESSION_TTL_ADMIN_MS = 12 * 60 * 60 * 1000;      // admin: 12 h
+        const SESSION_TTL_MS       = 90 * 24 * 60 * 60 * 1000;  // resto: 90 dias
+        const DIAS_VIGENCIA_CODIGO = 90;                        // igual que la sesion, para que no se desfasen
         const LIMPIEZA_MIN_MS   = 24 * 60 * 60 * 1000;  // limpieza de fotos: 1 vez por dia
 
         // Los administradores YA NO viven en el codigo.
@@ -673,12 +675,20 @@
         const SESSION_KEY = 'ferni_session';
         const SESSION_VERSION = 2;
 
+        // La sesion de un admin caduca rapido porque da permisos reales (borrar
+        // reportes, configurar el modulo de horarios, emitir codigos).
+        // La de un empleado, lider o encargado no da mas permisos que los de
+        // cualquier usuario anonimo, y son gente que abre la app un rato por dia
+        // desde el salon: caducarla seguido solo los deja afuera y obliga a
+        // reenviarles el codigo. Por eso les dura tres meses.
+        const ttlDeSesion = (datos) => (datos && datos.esAdmin) ? SESSION_TTL_ADMIN_MS : SESSION_TTL_MS;
+
         const guardarSesion = (datos) => {
           try {
             localStorage.setItem(SESSION_KEY, JSON.stringify(Object.assign({}, datos, {
               v: SESSION_VERSION,
               creadaEn: Date.now(),
-              expiraEn: Date.now() + SESSION_TTL_MS
+              expiraEn: Date.now() + ttlDeSesion(datos)
             })));
           } catch (e) {
             console.warn('No se pudo guardar la sesion local:', e);
@@ -863,16 +873,20 @@
             const handleValidarCodigo = async () => {
               setErrorCodigo('');
               await asegurarAuth();
-              const codigo = codigoInvitacion.toUpperCase().trim();
+              const escrito = codigoInvitacion.trim();
+              const codigo = escrito.toUpperCase();
               if (!codigo) { setErrorCodigo('Ingresá el código'); return; }
               try {
-                const doc = await db.collection('horarios_invitaciones').doc(codigo).get();
+                const col = db.collection('horarios_invitaciones');
+                let doc = await col.doc(codigo).get();
+                // Por si algun codigo quedo guardado con minusculas (ver vencimientos)
+                if (!doc.exists && escrito !== codigo) doc = await col.doc(escrito).get();
                 if (!doc.exists) { setErrorCodigo('El código no existe'); return; }
                 const inv = doc.data();
-                if (inv.usada) { setErrorCodigo('Este código ya fue usado'); return; }
+                if (inv.usada) { setErrorCodigo('Este código ya fue usado. Los códigos de líder son de un solo uso: pedile uno nuevo a tu gerente.'); return; }
                 const expiraEn = getFecha(inv.expiraEn);
                 if (expiraEn && Date.now() > expiraEn.getTime()) { setErrorCodigo('Este código expiró'); return; }
-                setInvitacionValida({ codigo, ...inv });
+                setInvitacionValida({ codigo: doc.id, ...inv });
               } catch (err) {
                 console.error(err);
                 setErrorCodigo('Error al validar el código. Revisá tu conexión.');
@@ -928,15 +942,21 @@
               setCargandoVtoLogin(true);
               await asegurarAuth();
               try {
-                const codigo = codigoVto.toUpperCase().trim();
-                const doc = await db.collection('vencimientos_invitaciones').doc(codigo).get();
+                const escrito = codigoVto.trim();
+                const codigo = escrito.toUpperCase();
+                const col = db.collection('vencimientos_invitaciones');
+                let doc = await col.doc(codigo).get();
+                // Algunos codigos viejos quedaron guardados con el rubro en minusculas
+                // (por ejemplo VTO-F3-perfumeria-HNK2U). Como aca pasamos todo a
+                // mayusculas, esos nunca coincidian y parecian invalidos para siempre.
+                if (!doc.exists && escrito !== codigo) doc = await col.doc(escrito).get();
                 if (!doc.exists) { setErrorVto('Código incorrecto. Consultá con el administrador.'); return; }
                 const inv = doc.data();
                 if (inv.revocado) { setErrorVto('Este código fue revocado. Pedí uno nuevo.'); return; }
                 const expiraEn = getFecha(inv.expiraEn);
                 if (expiraEn && Date.now() > expiraEn.getTime()) { setErrorVto('Este código expiró. Pedí uno nuevo.'); return; }
                 // Registrar uso sin bloquear (permite múltiples encargados)
-                await db.collection('vencimientos_invitaciones').doc(codigo).update({
+                await doc.ref.update({
                   usos: firebase.firestore.FieldValue.arrayUnion({ nombre: nombreVto.trim(), fecha: new Date().toISOString() })
                 });
                 const sesion = {
@@ -3648,7 +3668,7 @@
                 rubro: rubroParaInvitar,
                 creadaPor: usuario,
                 creadaEn: firebase.firestore.FieldValue.serverTimestamp(),
-                expiraEn: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 días
+                expiraEn: new Date(Date.now() + DIAS_VIGENCIA_CODIGO * 24 * 60 * 60 * 1000),
                 revocado: false,
                 usos: []
               };
@@ -3670,7 +3690,7 @@
               const mensaje = encodeURIComponent(
                 `Hola! Te invito a ser encargado/a de Control de Vencimientos de *${nombreRubro}* en FERNI ${inv.sucursal}.\n\n` +
                 `Tu código de acceso es: *${inv.codigo}*\n\n` +
-                `Entrá a la app FERNI, elegí "Vencimientos" en el login y usá ese código. Vence en 30 días.`
+                `Entrá a la app FERNI, elegí "Vencimientos" en el login y usá ese código.\n\nGuardá este mensaje: el código sirve todas las veces que necesites entrar, no es de un solo uso. Vence recién en ${DIAS_VIGENCIA_CODIGO} días.`
               );
               abrirExterno(`https://wa.me/?text=${mensaje}`);
             };
@@ -4075,7 +4095,7 @@
                     <div style={{ background: '#1A1A1A', border: '1px solid #3A3A3A', borderRadius: 16, padding: 28, maxWidth: 400, width: '100%', textAlign: 'center' }}>
                       <div style={{ fontSize: 36, marginBottom: 8 }}>🔑</div>
                       <div style={{ fontSize: 16, fontWeight: 700, color: '#F0EDE8', marginBottom: 6 }}>Código generado</div>
-                      <div style={{ fontSize: 12, color: '#888', marginBottom: 20 }}>Compartilo con el encargado por WhatsApp. Vence en 30 días. Puede ser usado por múltiples personas.</div>
+                      <div style={{ fontSize: 12, color: '#888', marginBottom: 20 }}>Compartilo con el encargado por WhatsApp. Vence en {DIAS_VIGENCIA_CODIGO} días y lo pueden usar varias personas, todas las veces que quieran: si alguien vuelve a entrar, reenviale este mismo código en vez de generar uno nuevo.</div>
                       <div style={{ background: '#0F0F0F', border: '2px dashed #4ECDC4', borderRadius: 10, padding: '18px 12px', marginBottom: 20, fontFamily: 'monospace', fontSize: 22, fontWeight: 700, letterSpacing: '0.12em', color: '#4ECDC4' }}>
                         {codigoGeneradoVto.codigo}
                       </div>
