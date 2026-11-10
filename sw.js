@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ferni-v1';
+const CACHE_NAME = 'ferni-incidencias-v2';
 const urlsToCache = [
   '.',
   './index.html',
